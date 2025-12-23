@@ -1,0 +1,27 @@
+server:
+  port: 8080
+  host: "127.0.0.1"
+
+
+mysql:
+  dsn: "your_dsn_string"
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+
+snowflake:
+  node_id: 1
+
+jwt:
+  secret_key: "key"
+  expire_hours: 720 # 24*30天
+
+smtp:        # SMTP邮件配置
+  smtp_host: smtp.qq.com
+  smtp_port: 587
+  smtp_user: email@qq.com           # 发送方邮箱
+  smtp_pass: password              # QQ邮箱授权码
+  encoded_name: Forge-验证码    # 发件人显示名称
