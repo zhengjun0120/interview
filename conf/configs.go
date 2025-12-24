@@ -16,8 +16,9 @@ type Config struct {
 }
 
 type Server struct {
-	Port string `yaml:"port"`
-	Host string `yaml:"host"`
+	Port               string `yaml:"port"`
+	Host               string `yaml:"host"`
+	YourFrontendDomain string `yaml:"your_frontend_domain"`
 }
 
 type Mysql struct {
