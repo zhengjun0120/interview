@@ -15,6 +15,9 @@ var (
 	//token过期或无效
 	TOKEN_IS_EXPIRED = MsgCode{Code: -2, Msg: "Token过期或无效"}
 
+	//参数错误
+	PARAM_ERROR = MsgCode{Code: 1000, Msg: "参数错误"}
+
 	//用户服务相关错误
 	USER_ID_NOT_EXIST = MsgCode{Code: 1001, Msg: "用户ID不存在"}
 )

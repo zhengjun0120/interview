@@ -24,7 +24,11 @@ func GenerateJWT(userID string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(conf.GetConfig().Jwt.SecretKey)
+	tokenString, err := token.SignedString(conf.GetConfig().Jwt.SecretKey)
+	if err != nil {
+		return "", fmt.Errorf("生成token失败，%v", err)
+	}
+	return tokenString, nil
 }
 
 // 解析token
