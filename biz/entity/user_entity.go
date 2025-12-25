@@ -22,9 +22,10 @@ func GetUserID(ctx context.Context) (string, bool) {
 	return userID, ok
 }
 
-func NewUser(username,password,email,userType string) *User{
-	userID ,err :=
+func NewUser(userID, username, password, email, userType string) *User {
+
 	return &User{
+		UserID:   userID,
 		Username: username,
 		Password: password,
 		Email:    email,

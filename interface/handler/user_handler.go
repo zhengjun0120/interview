@@ -21,7 +21,7 @@ func (h *Handler) Login(gCtx *gin.Context) {
 	params := caster.CastLoginReq2ServiceParams(&req)
 
 	serviceResp, err := h.UserServer.Login(ctx, params)
-	resp := caster.CastServiceResp2LoginResp(serviceResp)
+
 	if err != nil {
 		msgCode := ErrorToMsgCode(err)
 		if msgCode == response.COMMON_FAIL {
@@ -29,6 +29,7 @@ func (h *Handler) Login(gCtx *gin.Context) {
 		}
 		r.Error(msgCode)
 	} else {
+		resp := caster.CastServiceResp2LoginResp(serviceResp)
 		r.Success(resp)
 	}
 }
@@ -46,7 +47,6 @@ func (h *Handler) Register(gCtx *gin.Context) {
 
 	params := caster.CastRegisterReq2ServiceParams(&req)
 	serviceResp, err := h.UserServer.Register(ctx, params)
-	resp := caster.CastServiceResp2RegisterResp(serviceResp)
 
 	if err != nil {
 		msgCode := ErrorToMsgCode(err)
@@ -55,6 +55,7 @@ func (h *Handler) Register(gCtx *gin.Context) {
 		}
 		r.Error(msgCode)
 	} else {
+		resp := caster.CastServiceResp2RegisterResp(serviceResp)
 		r.Success(resp)
 	}
 }

@@ -21,7 +21,7 @@ var (
 	PASSWORD_ERROR    = errors.New("密码错误或用户不存在")
 
 	EMAIL_EXIST     = errors.New("邮箱已注册")
-	EMAIL_NOT_EXIST = errors.New("邮箱为注册")
+	EMAIL_NOT_EXIST = errors.New("邮箱未注册")
 )
 
 type UserService struct {
@@ -29,8 +29,8 @@ type UserService struct {
 	userRepo repo.UserRepo
 }
 
-func NewUserService() *UserService {
-	return &UserService{}
+func NewUserService(userRepo repo.UserRepo) *UserService {
+	return &UserService{userRepo: userRepo}
 }
 
 func (u *UserService) Login(ctx context.Context, req *types.LoginParams) (*types.LoginResponse, error) {

@@ -8,7 +8,10 @@ import (
 // 加密密码
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	return string(bytes), fmt.Errorf("加密密码失败: %v", err)
+	if err != nil {
+		return "", fmt.Errorf("加密密码失败: %v", err)
+	}
+	return string(bytes), nil
 }
 
 // 检查密码
