@@ -56,6 +56,7 @@ func (u *UserService) Login(ctx context.Context, req *types.LoginParams) (*types
 	}, nil
 }
 
+// 注册
 func (u *UserService) Register(ctx context.Context, req *types.RegisterParams) (*types.RegisterResponse, error) {
 	if req.Type != HR && req.Type != Seeker {
 		return nil, USER_TYPE_ERROR
