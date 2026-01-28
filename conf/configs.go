@@ -13,6 +13,7 @@ type Config struct {
 	Snowflake Snowflake `yaml:"snowflake"`
 	Jwt       Jwt       `yaml:"jwt"`
 	Smtp      Smtp      `yaml:"smtp"`
+	Cos       Cos       `yaml:"cos"`
 }
 
 type Server struct {
@@ -47,6 +48,12 @@ type Smtp struct {
 	SmtpUser    string `yaml:"smtp_user"`
 	SmtpPass    string `yaml:"smtp_pass"`
 	EncodedName string `yaml:"encoded_name"`
+}
+
+type Cos struct {
+	SecretId  string `yaml:"secret_id"`
+	SecretKey string `yaml:"secret_key"`
+	BucketUrl string `yaml:"bucket_url"`
 }
 
 var config Config

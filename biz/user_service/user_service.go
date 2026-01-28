@@ -4,24 +4,14 @@ import (
 	"ai_interview/biz/entity"
 	"ai_interview/biz/repo"
 	"ai_interview/biz/types"
+	"ai_interview/pkg/error_msg"
 	"ai_interview/util"
 	"context"
-	"errors"
 )
 
 var (
 	HR     = "hr"
 	Seeker = "seeker"
-
-	USER_ID_NOT_EXIST = errors.New("用户ID不存在")
-	USER_NOT_EXIST    = errors.New("用户不存在")
-	USER_TYPE_ERROR   = errors.New("用户类型错误")
-	PASSWORD_NOT_NULL = errors.New("密码不能为空")
-	USERNAME_NOT_NULL = errors.New("用户名不能为空")
-	PASSWORD_ERROR    = errors.New("密码错误或用户不存在")
-
-	EMAIL_EXIST     = errors.New("邮箱已注册")
-	EMAIL_NOT_EXIST = errors.New("邮箱未注册")
 )
 
 type UserService struct {
@@ -41,7 +31,7 @@ func (u *UserService) Login(ctx context.Context, req *types.LoginParams) (*types
 	}
 
 	if !util.CheckPassword(user.Password, req.Password) {
-		return nil, PASSWORD_ERROR
+		return nil, error_msg.PASSWORD_ERROR
 	}
 
 	token, err := util.GenerateJWT(user.UserID)
@@ -58,11 +48,11 @@ func (u *UserService) Login(ctx context.Context, req *types.LoginParams) (*types
 
 func (u *UserService) Register(ctx context.Context, req *types.RegisterParams) (*types.RegisterResponse, error) {
 	if req.Type != HR && req.Type != Seeker {
-		return nil, USER_TYPE_ERROR
+		return nil, error_msg.USER_TYPE_ERROR
 	} else if req.Password == "" {
-		return nil, PASSWORD_NOT_NULL
+		return nil, error_msg.PASSWORD_NOT_NULL
 	} else if req.Username == "" {
-		return nil, USERNAME_NOT_NULL
+		return nil, error_msg.USERNAME_NOT_NULL
 	}
 
 	ok, err := u.userRepo.CheckEmail(ctx, req.Email, req.Type)
@@ -70,7 +60,7 @@ func (u *UserService) Register(ctx context.Context, req *types.RegisterParams) (
 		return nil, err
 	}
 	if ok {
-		return nil, EMAIL_EXIST
+		return nil, error_msg.EMAIL_EXIST
 	}
 
 	// TODO: 检查验证码
