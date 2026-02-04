@@ -14,6 +14,7 @@ type Config struct {
 	Jwt       Jwt       `yaml:"jwt"`
 	Smtp      Smtp      `yaml:"smtp"`
 	Cos       Cos       `yaml:"cos"`
+	AiChat    AiChat    `yaml:"ai_chat"`
 }
 
 type Server struct {
@@ -54,6 +55,12 @@ type Cos struct {
 	SecretId  string `yaml:"secret_id"`
 	SecretKey string `yaml:"secret_key"`
 	BucketUrl string `yaml:"bucket_url"`
+}
+
+type AiChat struct {
+	ApiKey  string `yaml:"api_key"`
+	ModelId string `yaml:"model_id"`
+	BaseUrl string `yaml:"base_url"`
 }
 
 var config Config

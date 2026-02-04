@@ -4,6 +4,7 @@ import (
 	"ai_interview/biz/resume_service"
 	"ai_interview/biz/user_service"
 	"ai_interview/conf"
+	"ai_interview/infra/ai_chat"
 	"ai_interview/infra/cos"
 	"ai_interview/infra/database"
 	"ai_interview/infra/storage"
@@ -13,6 +14,7 @@ import (
 )
 
 func main() {
+	// 初始化配置
 	conf.InitConfig()
 
 	// 初始化数据库连接
@@ -20,6 +22,9 @@ func main() {
 
 	//初始化雪花id
 	util.InitSnowflake()
+
+	//初始化ai
+	ai_chat.InitAiChar()
 
 	//初始化Cos
 	cos.InitCos()
