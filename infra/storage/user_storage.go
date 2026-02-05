@@ -3,9 +3,9 @@ package storage
 import (
 	"ai_interview/biz/entity"
 	"ai_interview/biz/repo"
-	"ai_interview/biz/user_service"
 	"ai_interview/infra/database"
 	"ai_interview/infra/storage/po"
+	"ai_interview/pkg/error_msg"
 	"context"
 	"errors"
 	"fmt"
@@ -44,7 +44,7 @@ func errorDB(err error) error {
 func (u *UserStorage) GetUserByID(ctx context.Context, userID string, userType string) (*entity.User, error) {
 
 	if userType != HR && userType != Seeker {
-		return nil, user_service.USER_TYPE_ERROR
+		return nil, error_msg.USER_TYPE_ERROR
 	}
 
 	var user po.User
@@ -52,7 +52,7 @@ func (u *UserStorage) GetUserByID(ctx context.Context, userID string, userType s
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, user_service.USER_NOT_EXIST
+			return nil, error_msg.USER_NOT_EXIST
 		}
 		return nil, errorDB(err)
 	}
@@ -69,7 +69,7 @@ func (u *UserStorage) GetUserByID(ctx context.Context, userID string, userType s
 func (u *UserStorage) GetUserByEmail(ctx context.Context, email string, userType string) (*entity.User, error) {
 
 	if userType != HR && userType != Seeker {
-		return nil, user_service.USER_TYPE_ERROR
+		return nil, error_msg.USER_TYPE_ERROR
 	}
 
 	var user po.User
@@ -77,7 +77,7 @@ func (u *UserStorage) GetUserByEmail(ctx context.Context, email string, userType
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, user_service.USER_NOT_EXIST
+			return nil, error_msg.USER_NOT_EXIST
 		}
 		return nil, errorDB(err)
 	}
@@ -94,7 +94,7 @@ func (u *UserStorage) GetUserByEmail(ctx context.Context, email string, userType
 
 func (u *UserStorage) CreateUser(ctx context.Context, user *entity.User, userType string) error {
 	if userType != HR && userType != Seeker {
-		return user_service.USER_TYPE_ERROR
+		return error_msg.USER_TYPE_ERROR
 	}
 
 	var poUser po.User
@@ -114,9 +114,9 @@ func (u *UserStorage) CreateUser(ctx context.Context, user *entity.User, userTyp
 
 func (u *UserStorage) UpdatePassword(ctx context.Context, userID string, newPassword string, userType string) error {
 	if newPassword == "" {
-		return user_service.PASSWORD_NOT_NULL
+		return error_msg.PASSWORD_NOT_NULL
 	} else if userType != HR && userType != Seeker {
-		return user_service.USER_TYPE_ERROR
+		return error_msg.USER_TYPE_ERROR
 	}
 	update := map[string]interface{}{
 		"password": newPassword,
@@ -133,9 +133,9 @@ func (u *UserStorage) UpdatePassword(ctx context.Context, userID string, newPass
 
 func (u *UserStorage) UpdateUsername(ctx context.Context, userID string, newUsername string, userType string) error {
 	if newUsername == "" {
-		return user_service.USERNAME_NOT_NULL
+		return error_msg.USERNAME_NOT_NULL
 	} else if userType != HR && userType != Seeker {
-		return user_service.USER_TYPE_ERROR
+		return error_msg.USER_TYPE_ERROR
 	}
 
 	update := map[string]interface{}{
