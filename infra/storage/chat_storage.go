@@ -9,9 +9,11 @@ import (
 	"ai_interview/pkg/zlog"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"time"
 )
 
@@ -149,36 +151,83 @@ func (c *ChatStorage) AddMessage(ctx context.Context, conversationID string, mes
 	} else if message.Content == "" {
 		return error_msg.MESSAGE_CONTENT_NOT_NULL
 	}
-	//TODO 需要加锁解决并发问题 （同时更新可能会有并发问题）
 
-	var conversation po.Conversation
-	err := c.db.Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).First(&conversation).Error
+	err := c.db.Transaction(func(tx *gorm.DB) error {
+		var conversation po.Conversation
+
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).First(&conversation).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return error_msg.CONVERSATION_NOT_EXIST
+			}
+			return errorDB(err)
+		}
+
+		var messages []entity.Message
+		if err := json.Unmarshal(conversation.Messages, &messages); err != nil {
+			return fmt.Errorf("反序列化消息失败: %v", err)
+		}
+
+		messages = append(messages, message)
+
+		jsonData, err := json.Marshal(messages)
+		if err != nil {
+			return fmt.Errorf("序列化消息失败: %v", err)
+		}
+
+		err = tx.Model(&po.Conversation{}).Where("conversation_id = ?", conversationID).Update("messages", datatypes.JSON(jsonData)).Error
+		if err != nil {
+			return errorDB(err)
+		}
+		return nil
+
+	})
+
 	if err != nil {
 		return errorDB(err)
 	}
-	var messages []entity.Message
-	err = json.Unmarshal(conversation.Messages, &messages)
-	if err != nil {
-		return fmt.Errorf("反序列化消息失败: %v", err)
+
+	return nil
+}
+
+func (c *ChatStorage) DeleteInterview(ctx context.Context, conversationID string) error {
+	if conversationID == "" {
+		return error_msg.CONVERSATION_ID_NOT_NULL
 	}
 
-	messages = append(messages, message)
+	err := c.db.Transaction(func(tx *gorm.DB) error {
+		err := tx.Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).
+			Delete(&po.Conversation{}).Error
 
-	jsonData, err := json.Marshal(messages)
-	if err != nil {
-		return fmt.Errorf("序列化消息失败: %v", err)
-	}
-	updates := map[string]interface{}{
-		"messages": datatypes.JSON(jsonData),
-	}
-	err = c.db.Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).Updates(updates).Error
+		if err != nil {
+			return errorDB(err)
+		}
+
+		err = tx.Model(&po.Interview{}).WithContext(ctx).Where("conversation_id = ?", conversationID).
+			Delete(&po.Interview{}).Error
+
+		if err != nil {
+			return errorDB(err)
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return errorDB(err)
 	}
 	return nil
 }
 
-func (c *ChatStorage) DeleteInterview(ctx context.Context, conversationID string) error {
-	//TODO implement me
-	panic("implement me")
+func (c *ChatStorage) GetInterviewByConversationID(ctx context.Context, conversationID string) (*entity.Interview, error) {
+	if conversationID == "" {
+		return nil, error_msg.CONVERSATION_ID_NOT_NULL
+	}
+
+	var interview entity.Interview
+	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("conversation_id = ?", conversationID).First(&interview).Error
+	if err != nil {
+		return nil, errorDB(err)
+	}
+	return &interview, nil
 }

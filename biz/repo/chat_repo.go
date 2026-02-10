@@ -15,6 +15,9 @@ type ChatRepo interface {
 	//获取hr的所有面试
 	GetInterviewsByUserID(ctx context.Context, userID string) ([]entity.Interview, error)
 
+	//获取某人才的面试
+	GetInterviewByConversationID(ctx context.Context, conversationID string) (*entity.Interview, error)
+
 	//获取某面试的聊天记录
 	GetChatRecordByConversationID(ctx context.Context, conversationID string) ([]entity.Message, error)
 
@@ -24,6 +27,6 @@ type ChatRepo interface {
 	//在末尾添加单条聊天记录
 	AddMessage(ctx context.Context, conversationID string, message entity.Message) error
 
-	//删除某面试
+	//删除某面试+该面试的会话内容
 	DeleteInterview(ctx context.Context, conversationID string) error
 }
