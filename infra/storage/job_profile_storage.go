@@ -8,6 +8,7 @@ import (
 	"ai_interview/pkg/error_msg"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -30,6 +31,18 @@ func InitJobProfileStorage() {
 
 func GetJobProfileStorage() repo.JobProfileRepo {
 	return jps
+}
+
+func (j *JobProfileStorage) CheckJobTitle(ctx context.Context, jobTitle string) error {
+	var check po.JobProfile
+	err := j.db.Model(&po.JobProfile{}).WithContext(ctx).Where("job_title = ?", jobTitle).First(&check).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return errorDB(err)
+	}
+	return error_msg.JOB_TITLE_ALREADY_EXISTS
 }
 
 func (j *JobProfileStorage) CreateJobProfile(ctx context.Context, jobProfile *entity.JobProfile) error {
@@ -119,9 +132,11 @@ func (j *JobProfileStorage) GetJobProfileByUserID(ctx context.Context, userID st
 
 	for i, v := range jobProfilePOs {
 		resp[i] = entity.JobProfile{
-			JobProfileID: v.JobProfileID,
-			JobTitle:     v.JobTitle,
-			UserID:       v.UserID,
+			JobProfileID:           v.JobProfileID,
+			JobTitle:               v.JobTitle,
+			UserID:                 v.UserID,
+			AiAdjustmentSuggestion: v.AiAdjustmentSuggestion,
+			CreatedAt:              v.CreateTime,
 		}
 
 		err := json.Unmarshal(v.Competencies, &resp[i].Competencies)

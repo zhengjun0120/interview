@@ -1,5 +1,7 @@
 package entity
 
+import "time"
+
 type CompetenciesJson struct {
 	Name   string `json:"name"`
 	Type   string `json:"type"`
@@ -13,4 +15,5 @@ type JobProfile struct {
 	Competencies           []CompetenciesJson //岗位能力要求
 	RedLineCondition       []string           //岗位红线要求(自动淘汰规则)
 	AiAdjustmentSuggestion string             //岗位调优建议
+	CreatedAt              time.Time
 }

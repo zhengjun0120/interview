@@ -42,4 +42,5 @@ var (
 	JOB_TITLE_TOO_LONG      = errors.New("职位名称太长")
 
 	JOB_PROFILE_COMPETENCIES_NOT_NULL = errors.New("职位竞争力不能为空")
+	JOB_TITLE_ALREADY_EXISTS          = errors.New("职位名称已存在")
 )

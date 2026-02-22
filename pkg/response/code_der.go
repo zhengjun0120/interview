@@ -18,6 +18,9 @@ var (
 	//参数错误
 	PARAM_ERROR = MsgCode{Code: 1000, Msg: "参数错误"}
 
+	//Query参数错误
+	QUERY_PARAM_ERROR = MsgCode{Code: 1001, Msg: "Query参数错误"}
+
 	//用户服务相关错误
-	USER_ID_NOT_EXIST = MsgCode{Code: 1001, Msg: "用户ID不存在"}
+	USER_ID_NOT_EXIST = MsgCode{Code: 2001, Msg: "用户ID不存在"}
 )

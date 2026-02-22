@@ -20,4 +20,7 @@ type JobProfileRepo interface {
 
 	//获取单个岗位画像
 	GetJobProfileByJobProfileID(ctx context.Context, jobProfileID string) (*entity.JobProfile, error)
+
+	//检查职位名称是否已存在
+	CheckJobTitle(ctx context.Context, jobTitle string) error
 }

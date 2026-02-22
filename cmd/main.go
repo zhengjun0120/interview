@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ai_interview/biz/job_profile_service"
 	"ai_interview/biz/resume_service"
 	"ai_interview/biz/user_service"
 	"ai_interview/conf"
@@ -32,13 +33,16 @@ func main() {
 	//初始化仓库
 	storage.InitUserStorage()
 	storage.InitResumeStorage()
+	storage.InitChatStorage()
+	storage.InitJobProfileStorage()
 
 	// 初始化服务
 	us := user_service.NewUserService(storage.GetUserStorage())
-	rs := resume_service.NewResumeService(storage.GetResumeStorage())
+	rs := resume_service.NewResumeService(storage.GetResumeStorage(), storage.GetChatStorage())
+	js := job_profile_service.NewJobProfileService(storage.GetJobProfileStorage())
 
 	// 初始化handler
-	handler.InitHandler(us, rs)
+	handler.InitHandler(us, rs, js)
 
 	// 启动服务
 	router.RunServer()
