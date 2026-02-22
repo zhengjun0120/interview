@@ -11,12 +11,16 @@ import (
 	"ai_interview/infra/storage"
 	"ai_interview/interface/handler"
 	"ai_interview/interface/router"
+	"ai_interview/pkg/zlog"
 	"ai_interview/util"
 )
 
 func main() {
 	// 初始化配置
 	conf.InitConfig()
+
+	//初始化日志
+	zlog.InitLog("dev", "info")
 
 	// 初始化数据库连接
 	database.InitDB()
