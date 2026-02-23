@@ -9,6 +9,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -17,20 +20,25 @@ var (
 	Seeker = "seeker"
 )
 
-type UserStorage struct {
-	db *gorm.DB
-}
-
 var us *UserStorage
+
+type UserStorage struct {
+	db     *gorm.DB
+	client *redis.Client
+}
 
 func InitUserStorage() {
 	db := database.GetDB()
+	client := database.GetRedis()
 
 	if err := db.AutoMigrate(&po.User{}); err != nil {
 		panic("user表自动迁移失败" + err.Error())
 	}
 
-	us = &UserStorage{db}
+	us = &UserStorage{
+		db,
+		client,
+	}
 }
 
 func GetUserStorage() repo.UserRepo {

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"ai_interview/biz/resume_service"
-	"ai_interview/biz/user_service"
+	"ai_interview/biz/service/resume_service"
+	"ai_interview/biz/service/user_service"
 	"ai_interview/conf"
 	"ai_interview/infra/ai_chat"
 	"ai_interview/infra/cos"
@@ -19,6 +19,9 @@ func main() {
 
 	// 初始化数据库连接
 	database.InitDB()
+
+	//初始化redis连接
+	database.InitRedis()
 
 	//初始化雪花id
 	util.InitSnowflake()

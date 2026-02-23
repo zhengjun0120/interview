@@ -1,10 +1,13 @@
 package handler
 
-import "ai_interview/biz/types"
+import (
+	"ai_interview/biz/types"
+)
 
 type Handler struct {
 	UserServer   types.IUserService
 	ResumeServer types.IResumeService
+	CodeServer   types.ICodeService
 }
 
 var handler Handler

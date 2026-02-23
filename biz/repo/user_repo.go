@@ -3,6 +3,7 @@ package repo
 import (
 	"ai_interview/biz/entity"
 	"context"
+	"time"
 )
 
 type UserRepo interface {
@@ -23,4 +24,18 @@ type UserRepo interface {
 
 	//检查邮箱是否注册
 	CheckEmail(ctx context.Context, email string, userType string) (bool, error)
+
+	//redis操作
+	//根据key获取用户信息
+	Get(c context.Context, key string) (interface{}, error)
+
+	//储存用户信息
+	Set(c context.Context, key string, value any, expiration time.Duration) error
+
+	//哈希存储和获取
+	HGet(c context.Context, key string, receiver any) error
+	HSet(c context.Context, key string, value any, expiration time.Duration) error
+
+	//根据key删用户
+	Del(c context.Context, key string) error
 }

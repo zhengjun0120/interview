@@ -3,6 +3,8 @@ package user_service
 import (
 	"ai_interview/biz/entity"
 	"ai_interview/biz/repo"
+	"ai_interview/biz/service/code_service"
+	"ai_interview/biz/service/code_service/sms"
 	"ai_interview/biz/types"
 	"ai_interview/pkg/error_msg"
 	"ai_interview/util"
@@ -17,6 +19,7 @@ var (
 type UserService struct {
 	// TODO: 注入需要的依赖
 	userRepo repo.UserRepo
+	sms      sms.SmsService
 }
 
 func NewUserService(userRepo repo.UserRepo) *UserService {
@@ -56,6 +59,10 @@ func (u *UserService) Register(ctx context.Context, req *types.RegisterParams) (
 		return nil, error_msg.USERNAME_NOT_NULL
 	}
 
+	if err := util.CheckEmail(req.Email); err != nil {
+		return nil, error_msg.Email_FORMAT_INVALID
+	}
+
 	ok, err := u.userRepo.CheckEmail(ctx, req.Email, req.Type)
 	if err != nil {
 		return nil, err
@@ -65,6 +72,9 @@ func (u *UserService) Register(ctx context.Context, req *types.RegisterParams) (
 	}
 
 	// TODO: 检查验证码
+	if err := code_service.NewCodeService(ctx, u.userRepo, u.sms).CaptchaCheck(types.CaptchaWayTypeRegister, req.Code); err != nil {
+		return nil, err
+	}
 
 	userID := util.GenerateStringID()
 	hashPassword, err := util.HashPassword(req.Password)
