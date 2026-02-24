@@ -42,7 +42,7 @@ func main() {
 
 	// 初始化服务
 	us := user_service.NewUserService(storage.GetUserStorage())
-	rs := resume_service.NewResumeService(storage.GetResumeStorage(), storage.GetChatStorage())
+	rs := resume_service.NewResumeService(storage.GetResumeStorage(), storage.GetChatStorage(), storage.GetJobProfileStorage(), ai_chat.GetAiClient())
 	js := job_profile_service.NewJobProfileService(storage.GetJobProfileStorage())
 
 	// 初始化handler

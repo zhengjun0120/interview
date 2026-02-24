@@ -26,8 +26,8 @@ type ResumeService struct {
 	chatService    ai_chat.IChatService
 }
 
-func NewResumeService(resumeRepo repo.ResumeRepo, chatRepo repo.ChatRepo) *ResumeService {
-	return &ResumeService{resumeRepo: resumeRepo, chatRepo: chatRepo}
+func NewResumeService(resumeRepo repo.ResumeRepo, chatRepo repo.ChatRepo, jobProfileRepo repo.JobProfileRepo, chatService ai_chat.IChatService) *ResumeService {
+	return &ResumeService{resumeRepo: resumeRepo, chatRepo: chatRepo, jobProfileRepo: jobProfileRepo, chatService: chatService}
 }
 
 func (h *ResumeService) jobProfileEntity2String(jobProfiles []entity.JobProfile) string {
