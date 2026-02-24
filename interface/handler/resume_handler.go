@@ -38,3 +38,41 @@ func (h *Handler) UploadResume(gCtx *gin.Context) {
 		r.Success(resp)
 	}
 }
+
+func (h *Handler) GetTalent(gCtx *gin.Context) {
+	ctx := gCtx.Request.Context()
+
+	r := response.NewResponse(gCtx)
+
+	query := gCtx.Query("type")
+	if query != "all" && query != "interview" {
+		r.Error(response.QUERY_PARAM_ERROR)
+		zlog.Errorf("GetTalent接口参数错误，type:%s", query)
+		return
+	}
+
+	var err error
+
+	if query == "all" {
+		serviceResp, err := h.ResumeServer.GetTalentAll(ctx)
+		if err == nil {
+			resp := caster.CastServiceResp2GetTalentAllResp(serviceResp)
+			r.Success(resp)
+			return
+		}
+	} else {
+		serviceResp, err := h.ResumeServer.GetTalentInterview(ctx)
+		if err == nil {
+			resp := caster.CastServiceResp2GetTalentInterviewResp(serviceResp)
+			r.Success(resp)
+			return
+		}
+	}
+
+	msgCode := ErrorToMsgCode(err)
+	if msgCode == response.COMMON_FAIL {
+		msgCode.Msg = err.Error()
+	}
+	r.Error(msgCode)
+	zlog.Errorf("GetTalent接口调用失败，%v", err)
+}

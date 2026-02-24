@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ai_interview/biz/job_profile_service"
 	"ai_interview/biz/resume_service"
 	"ai_interview/biz/user_service"
 	"ai_interview/conf"
@@ -10,12 +11,16 @@ import (
 	"ai_interview/infra/storage"
 	"ai_interview/interface/handler"
 	"ai_interview/interface/router"
+	"ai_interview/pkg/zlog"
 	"ai_interview/util"
 )
 
 func main() {
 	// 初始化配置
 	conf.InitConfig()
+
+	//初始化日志
+	zlog.InitLog("dev", "info")
 
 	// 初始化数据库连接
 	database.InitDB()
@@ -35,13 +40,16 @@ func main() {
 	//初始化仓库
 	storage.InitUserStorage()
 	storage.InitResumeStorage()
+	storage.InitChatStorage()
+	storage.InitJobProfileStorage()
 
 	// 初始化服务
 	us := user_service.NewUserService(storage.GetUserStorage())
-	rs := resume_service.NewResumeService(storage.GetResumeStorage())
+	rs := resume_service.NewResumeService(storage.GetResumeStorage(), storage.GetChatStorage(), storage.GetJobProfileStorage(), ai_chat.GetAiClient())
+	js := job_profile_service.NewJobProfileService(storage.GetJobProfileStorage())
 
 	// 初始化handler
-	handler.InitHandler(us, rs)
+	handler.InitHandler(us, rs, js)
 
 	// 启动服务
 	router.RunServer()
