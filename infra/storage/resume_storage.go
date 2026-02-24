@@ -265,6 +265,7 @@ func (r *ResumeStorage) CreateResumeAndTalent(ctx context.Context, resume *entit
 	resumePO.ResumeName = resume.ResumeName
 	resumePO.ResumeUrl = resume.ResumeUrl
 	resumePO.UserID = resume.UserID
+	resumePO.CreatedAt = resume.CreatedAt
 
 	talentPO.TalentID = talent.TalentID
 	talentPO.FullName = talent.FullName
@@ -274,6 +275,7 @@ func (r *ResumeStorage) CreateResumeAndTalent(ctx context.Context, resume *entit
 	talentPO.HireStatus = talent.HireStatus
 	talentPO.InterviewStatus = talent.InterviewStatus
 	talentPO.UserID = talent.UserID
+	talentPO.CreatedAt = talent.CreatedAt
 
 	err := tx.Model(&po.Resume{}).WithContext(ctx).Create(&resumePO).Error
 	if err != nil {

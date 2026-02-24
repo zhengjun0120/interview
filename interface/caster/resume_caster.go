@@ -14,7 +14,14 @@ func CastUploadResumeReq2ServiceParams(req *def.UploadResumeRequest) *types.Uplo
 
 func CastServiceResp2UploadResumeResp(resp *types.UploadResumeResponse) *def.UploadResumeResponse {
 	return &def.UploadResumeResponse{
-		ResumeUrl: resp.ResumeUrl,
+		TalentID:        resp.TalentID,
+		FullName:        resp.FullName,
+		TargetPosition:  resp.TargetPosition,
+		MatchScore:      resp.MatchScore,
+		InterviewStatus: resp.InterviewStatus,
+		CoreAdvantages:  resp.CoreAdvantages,
+		HireStatus:      resp.HireStatus,
+		CreatedAt:       resp.CreatedAt,
 	}
 }
 
@@ -35,7 +42,7 @@ func CastServiceResp2GetTalentAllResp(resp []types.GetTalentAllResponse) *def.Ge
 	}
 
 	res.List = talents
-	return res
+	return &res
 }
 
 func CastServiceResp2GetTalentInterviewResp(resp []types.GetTalentInterviewResponse) *def.GetTalentInterviewResponse {
@@ -55,6 +62,6 @@ func CastServiceResp2GetTalentInterviewResp(resp []types.GetTalentInterviewRespo
 	}
 
 	res.List = talents
-	return res
+	return &res
 
 }

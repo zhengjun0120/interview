@@ -20,7 +20,14 @@ type UploadResumeParams struct {
 }
 
 type UploadResumeResponse struct {
-	ResumeUrl string
+	TalentID        string
+	FullName        string
+	TargetPosition  string
+	MatchScore      int
+	InterviewStatus string
+	CoreAdvantages  string
+	HireStatus      string
+	CreatedAt       time.Time
 }
 
 type GetTalentAllResponse struct {

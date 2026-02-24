@@ -7,6 +7,7 @@ type Resume struct {
 	ResumeID   string
 	ResumeName string
 	ResumeUrl  string
+	CreatedAt  time.Time
 }
 
 type Talent struct {
@@ -20,4 +21,11 @@ type Talent struct {
 	CoreAdvantages  string    //核心优势
 	HireStatus      string    //录用状态
 	CreatedAt       time.Time //创建时间
+}
+
+type TalentJson struct {
+	FullName       string `json:"full_name"`
+	TargetPosition string `json:"target_position"`
+	MatchScore     int    `json:"match_score"`
+	CoreAdvantages string `json:"core_advantages"`
 }
