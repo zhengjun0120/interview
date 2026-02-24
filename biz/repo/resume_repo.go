@@ -27,6 +27,9 @@ type ResumeRepo interface {
 	//根据人才ID获取人才
 	GetTalentByID(ctx context.Context, talentID string) (*entity.Talent, error)
 
+	//根据用户ID获取已面试的人才
+	GetTalentInterviewByUserID(ctx context.Context, userID string) ([]entity.Talent, error)
+
 	//更新人才
 	UpdateTalent(ctx context.Context, newTalent *entity.Talent) error
 

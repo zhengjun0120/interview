@@ -2,7 +2,7 @@ package util
 
 import (
 	"ai_interview/conf"
-	"fmt"
+	"ai_interview/pkg/zlog"
 	"github.com/bwmarrin/snowflake"
 )
 
@@ -20,7 +20,7 @@ func InitSnowflake() {
 	}
 	note = n
 
-	fmt.Println("雪花节点初始化完成")
+	zlog.Infof("雪花节点初始化完成")
 }
 
 func GenerateStringID() string {

@@ -179,6 +179,32 @@ func (r *ResumeStorage) GetTalentByID(ctx context.Context, talentID string) (*en
 	}, nil
 }
 
+func (r *ResumeStorage) GetTalentInterviewByUserID(ctx context.Context, userID string) ([]entity.Talent, error) {
+	var talentPOs []po.TalentPool
+
+	err := r.db.Model(&po.TalentPool{}).WithContext(ctx).Where("user_id = ? AND interview_status = ?", userID, "已面试").Find(&talentPOs).Error
+	if err != nil {
+		return nil, errorDB(err)
+	}
+
+	talents := make([]entity.Talent, len(talentPOs))
+	for i, talentPO := range talentPOs {
+		talents[i] = entity.Talent{
+			TalentID:        talentPO.TalentID,
+			FullName:        talentPO.FullName,
+			TargetPosition:  talentPO.TargetPosition,
+			MatchScore:      talentPO.MatchScore,
+			CoreAdvantages:  talentPO.CoreAdvantages,
+			HireStatus:      talentPO.HireStatus,
+			InterviewStatus: talentPO.InterviewStatus,
+			UserID:          talentPO.UserID,
+			CreatedAt:       talentPO.CreatedAt,
+		}
+	}
+
+	return talents, nil
+}
+
 func (r *ResumeStorage) UpdateTalent(ctx context.Context, newTalent *entity.Talent) error {
 
 	updates := map[string]interface{}{
@@ -239,6 +265,7 @@ func (r *ResumeStorage) CreateResumeAndTalent(ctx context.Context, resume *entit
 	resumePO.ResumeName = resume.ResumeName
 	resumePO.ResumeUrl = resume.ResumeUrl
 	resumePO.UserID = resume.UserID
+	resumePO.CreatedAt = resume.CreatedAt
 
 	talentPO.TalentID = talent.TalentID
 	talentPO.FullName = talent.FullName
@@ -248,6 +275,7 @@ func (r *ResumeStorage) CreateResumeAndTalent(ctx context.Context, resume *entit
 	talentPO.HireStatus = talent.HireStatus
 	talentPO.InterviewStatus = talent.InterviewStatus
 	talentPO.UserID = talent.UserID
+	talentPO.CreatedAt = talent.CreatedAt
 
 	err := tx.Model(&po.Resume{}).WithContext(ctx).Create(&resumePO).Error
 	if err != nil {
