@@ -1,8 +1,8 @@
 package main
 
 import (
-	"ai_interview/biz/service/resume_service"
-	"ai_interview/biz/service/user_service"
+	"ai_interview/biz/resume_service"
+	"ai_interview/biz/user_service"
 	"ai_interview/conf"
 	"ai_interview/infra/ai_chat"
 	"ai_interview/infra/cos"

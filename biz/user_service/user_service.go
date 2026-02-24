@@ -1,10 +1,10 @@
 package user_service
 
 import (
+	"ai_interview/biz/code_service"
+	"ai_interview/biz/code_service/sms"
 	"ai_interview/biz/entity"
 	"ai_interview/biz/repo"
-	"ai_interview/biz/service/code_service"
-	"ai_interview/biz/service/code_service/sms"
 	"ai_interview/biz/types"
 	"ai_interview/pkg/error_msg"
 	"ai_interview/util"

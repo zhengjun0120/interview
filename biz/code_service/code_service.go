@@ -1,8 +1,8 @@
 package code_service
 
 import (
+	"ai_interview/biz/code_service/sms"
 	"ai_interview/biz/repo"
-	"ai_interview/biz/service/code_service/sms"
 	"ai_interview/biz/types"
 	"ai_interview/pkg/error_msg"
 	"context"
