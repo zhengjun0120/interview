@@ -25,6 +25,9 @@ func main() {
 	// 初始化数据库连接
 	database.InitDB()
 
+	//初始化redis连接
+	database.InitRedis()
+
 	//初始化雪花id
 	util.InitSnowflake()
 

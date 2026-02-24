@@ -22,6 +22,18 @@ var EMAIL_EXIST = errors.New("邮箱已注册")
 
 var EMAIL_NOT_EXIST = errors.New("邮箱未注册")
 
+var Email_FORMAT_INVALID = errors.New("邮箱格式不对")
+
+var ErrorCaptchaSend = errors.New("验证码发送失败")
+
+var ErrorCaptchaCheck = errors.New("验证码错误")
+
+var ErrorSecurityAssertion = errors.New("安全断言失败")
+
+var ErrorCaptchaExpire = errors.New("验证码过期或未向该手机号发送过验证码")
+
+var ErrorCode2Redis = errors.New("验证码存入redis失败")
+
 var (
 	RESUME_NAME_NOT_NULL            = errors.New("简历名称不能为空")
 	RESUME_ID_NOT_NULL              = errors.New("简历ID不能为空")
