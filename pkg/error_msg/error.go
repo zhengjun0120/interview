@@ -43,4 +43,16 @@ var (
 	TALENT_NAME_TOO_LONG            = errors.New("人才名称太长")
 	TALENT_TARGET_POSITION_NOT_NULL = errors.New("职位不能为空")
 	TALENT_MATCH_SCORE_INVALID      = errors.New("匹配分数无效")
+
+	CONVERSATION_ID_NOT_NULL = errors.New("对话ID不能为空")
+	MESSAGE_ROLE_ERROR       = errors.New("消息角色错误")
+	MESSAGE_CONTENT_NOT_NULL = errors.New("消息内容不能为空")
+	CONVERSATION_NOT_EXIST   = errors.New("对话不存在")
+
+	JOB_PROFILE_ID_NOT_NULL = errors.New("职位ID不能为空")
+	JOB_TITLE_NOT_NULL      = errors.New("职位名称不能为空")
+	JOB_TITLE_TOO_LONG      = errors.New("职位名称太长")
+
+	JOB_PROFILE_COMPETENCIES_NOT_NULL = errors.New("职位竞争力不能为空")
+	JOB_TITLE_ALREADY_EXISTS          = errors.New("职位名称已存在")
 )

@@ -2,7 +2,7 @@ package database
 
 import (
 	"ai_interview/conf"
-	"fmt"
+	"ai_interview/pkg/zlog"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -16,7 +16,7 @@ func InitDB() {
 		panic("mysql连接失败" + err.Error())
 	}
 	db = _db
-	fmt.Println("mysql连接成功")
+	zlog.Infof("mysql连接成功")
 }
 
 func GetDB() *gorm.DB {
