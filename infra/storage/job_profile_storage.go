@@ -33,16 +33,16 @@ func GetJobProfileStorage() repo.JobProfileRepo {
 	return jps
 }
 
-func (j *JobProfileStorage) CheckJobTitle(ctx context.Context, jobTitle string) error {
+func (j *JobProfileStorage) CheckJobTitle(ctx context.Context, jobTitle string) (string, error) {
 	var check po.JobProfile
 	err := j.db.Model(&po.JobProfile{}).WithContext(ctx).Where("job_title = ?", jobTitle).First(&check).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil
+			return "", nil
 		}
-		return errorDB(err)
+		return "", errorDB(err)
 	}
-	return error_msg.JOB_TITLE_ALREADY_EXISTS
+	return check.JobProfileID, error_msg.JOB_TITLE_ALREADY_EXISTS
 }
 
 func (j *JobProfileStorage) CreateJobProfile(ctx context.Context, jobProfile *entity.JobProfile) error {
@@ -104,15 +104,26 @@ func (j *JobProfileStorage) UpdateJobProfile(ctx context.Context, jobProfile *en
 		return error_msg.JOB_TITLE_TOO_LONG
 	} else if len(jobProfile.Competencies) == 0 {
 		return error_msg.JOB_PROFILE_COMPETENCIES_NOT_NULL
+	} else if jobProfile.JobProfileID == "" {
+		return error_msg.JOB_PROFILE_ID_NOT_NULL
+	}
+
+	competenciesJson, err := json.Marshal(jobProfile.Competencies)
+	if err != nil {
+		return fmt.Errorf("序列化 competencies 失败: %v", err)
+	}
+	redLineConditionJson, err := json.Marshal(jobProfile.RedLineCondition)
+	if err != nil {
+		return fmt.Errorf("序列化 red_line_condition 失败: %v", err)
 	}
 
 	updates := map[string]interface{}{
 		"job_title":          jobProfile.JobTitle,
-		"competencies":       jobProfile.Competencies,
-		"red_line_condition": jobProfile.RedLineCondition,
+		"competencies":       datatypes.JSON(competenciesJson),
+		"red_line_condition": datatypes.JSON(redLineConditionJson),
 	}
 
-	err := j.db.Model(&po.JobProfile{}).WithContext(ctx).Where("job_profile_id = ?", jobProfile.JobProfileID).Updates(updates).Error
+	err = j.db.Model(&po.JobProfile{}).WithContext(ctx).Where("job_profile_id = ?", jobProfile.JobProfileID).Updates(updates).Error
 	if err != nil {
 		return errorDB(err)
 	}
@@ -136,7 +147,7 @@ func (j *JobProfileStorage) GetJobProfileByUserID(ctx context.Context, userID st
 			JobTitle:               v.JobTitle,
 			UserID:                 v.UserID,
 			AiAdjustmentSuggestion: v.AiAdjustmentSuggestion,
-			CreatedAt:              v.CreateTime,
+			CreatedAt:              v.CreatedAt,
 		}
 
 		err := json.Unmarshal(v.Competencies, &resp[i].Competencies)

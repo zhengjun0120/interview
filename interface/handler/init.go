@@ -5,10 +5,11 @@ import (
 )
 
 type Handler struct {
-	UserServer   types.IUserService
-	ResumeServer types.IResumeService
-	CodeServer   types.ICodeService
+	UserServer       types.IUserService
+	ResumeServer     types.IResumeService
+	CodeServer       types.ICodeService
 	JobProfileServer types.IJobProfileService
+	ChatServer       types.IChatService
 }
 
 var handler *Handler
@@ -17,10 +18,11 @@ func GetHandler() *Handler {
 	return handler
 }
 
-func InitHandler(userServer types.IUserService, resumeServer types.IResumeService, jobProfileServer types.IJobProfileService) {
+func InitHandler(userServer types.IUserService, resumeServer types.IResumeService, jobProfileServer types.IJobProfileService, chatServer types.IChatService) {
 	handler = &Handler{
 		UserServer:       userServer,
 		ResumeServer:     resumeServer,
 		JobProfileServer: jobProfileServer,
+		ChatServer:       chatServer,
 	}
 }

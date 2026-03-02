@@ -23,4 +23,19 @@ var (
 
 	//用户服务相关错误
 	USER_ID_NOT_EXIST = MsgCode{Code: 2001, Msg: "用户ID不存在"}
+
+	//websocket相关
+
+	//用户未连接
+	USER_NOT_CONNECTED = MsgCode{Code: 3001, Msg: "用户未连接"}
+	//用户ID为空
+	USER_ID_IS_EMPTY = MsgCode{Code: 3002, Msg: "用户ID为空"}
+	//解析消息错误
+	PARSE_MESSAGE_ERROR = MsgCode{Code: 3003, Msg: "解析消息错误"}
+	//房间不存在
+	ROOM_NOT_EXIST = MsgCode{Code: 3004, Msg: "房间不存在"}
 )
+
+func CustomError(err error) MsgCode {
+	return MsgCode{Code: -3, Msg: err.Error()}
+}

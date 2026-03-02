@@ -4,8 +4,8 @@ import (
 	"ai_interview/biz/ai_chat"
 	"ai_interview/biz/entity"
 	"ai_interview/biz/repo"
+	"ai_interview/biz/resume_service/cos_service"
 	"ai_interview/biz/types"
-	"ai_interview/infra/cos"
 	"ai_interview/pkg/error_msg"
 	"ai_interview/util"
 	"context"
@@ -24,10 +24,11 @@ type ResumeService struct {
 	chatRepo       repo.ChatRepo
 	jobProfileRepo repo.JobProfileRepo
 	chatService    ai_chat.IChatService
+	cosService     cos_service.ICosService
 }
 
-func NewResumeService(resumeRepo repo.ResumeRepo, chatRepo repo.ChatRepo, jobProfileRepo repo.JobProfileRepo, chatService ai_chat.IChatService) *ResumeService {
-	return &ResumeService{resumeRepo: resumeRepo, chatRepo: chatRepo, jobProfileRepo: jobProfileRepo, chatService: chatService}
+func NewResumeService(resumeRepo repo.ResumeRepo, chatRepo repo.ChatRepo, jobProfileRepo repo.JobProfileRepo, chatService ai_chat.IChatService, cosService cos_service.ICosService) *ResumeService {
+	return &ResumeService{resumeRepo: resumeRepo, chatRepo: chatRepo, jobProfileRepo: jobProfileRepo, chatService: chatService, cosService: cosService}
 }
 
 func (h *ResumeService) jobProfileEntity2String(jobProfiles []entity.JobProfile) string {
@@ -90,11 +91,13 @@ func (h *ResumeService) UploadResume(ctx context.Context, req *types.UploadResum
 
 	resumeID := util.GenerateStringID()
 
-	resumeUrl, err := cos.UploadResume(req.File, req.FileHeader, resumeID)
+	// 上传简历到cos
+	resumeUrl, err := h.cosService.UploadResume(req.File, req.FileHeader, resumeID)
 	if err != nil {
 		return nil, err
 	}
 
+	// 保存简历信息
 	resume := entity.Resume{
 		ResumeID:   resumeID,
 		ResumeName: req.FileHeader.Filename,
@@ -103,24 +106,38 @@ func (h *ResumeService) UploadResume(ctx context.Context, req *types.UploadResum
 		CreatedAt:  time.Now(),
 	}
 
+	// 获取用户岗位画像
 	jobProfiles, err := h.jobProfileRepo.GetJobProfileByUserID(ctx, userID)
 	if err != nil {
+		h.cosService.DeleteFile(ctx, resumeUrl)
 		return nil, err
 	}
 
+	// 将岗位画像转换为字符串
 	jobProfileStr := h.jobProfileEntity2String(jobProfiles)
 
-	messageStr, err := h.chatService.DocxChat(ctx, resumeUrl, jobProfileStr)
+	// 解析简历核心信息
+	messageStr, err := h.chatService.DocxToTalentDataChat(ctx, resumeUrl, jobProfileStr)
 	if err != nil {
+		h.cosService.DeleteFile(ctx, resumeUrl)
 		return nil, err
 	}
-
 	var talentJson entity.TalentJson
 	err = json.Unmarshal([]byte(messageStr), &talentJson)
 	if err != nil {
+		h.cosService.DeleteFile(ctx, resumeUrl)
 		return nil, fmt.Errorf("解析ai消息失败: %v\n 原始消息: %s", err, messageStr)
 	}
 
+	// 获取简历文本内容
+	resumeStr, err := h.chatService.DocxToResumeStrChat(ctx, resumeUrl)
+	if err != nil {
+		h.cosService.DeleteFile(ctx, resumeUrl)
+		return nil, err
+	}
+	// 保存简历文本内容
+	resume.ResumeStr = resumeStr
+	// 创建简历和人才信息
 	var talentEntity = entity.Talent{
 		UserID:          userID,
 		ResumeID:        resumeID,
@@ -134,8 +151,10 @@ func (h *ResumeService) UploadResume(ctx context.Context, req *types.UploadResum
 		CreatedAt:       time.Now(),
 	}
 
+	// 保存简历和人才信息
 	err = h.resumeRepo.CreateResumeAndTalent(ctx, &resume, &talentEntity)
 	if err != nil {
+		h.cosService.DeleteFile(ctx, resumeUrl)
 		return nil, err
 	}
 
@@ -213,7 +232,12 @@ func (h *ResumeService) GetTalentInterview(ctx context.Context) ([]types.GetTale
 
 	timeMap := make(map[string]int)
 	for _, v := range interviews {
-		timeMap[v.TalentID] = h.getInterviewTimeSeconds(v.InterviewStartTime, v.InterviewEndTime)
+		if v.InterviewEndTime == nil {
+			timeMap[v.TalentID] = 0
+		} else {
+			timeMap[v.TalentID] = h.getInterviewTimeSeconds(v.InterviewStartTime, *v.InterviewEndTime)
+		}
+
 	}
 
 	resp := make([]types.GetTalentInterviewResponse, len(talents))

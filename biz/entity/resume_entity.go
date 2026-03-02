@@ -7,6 +7,7 @@ type Resume struct {
 	ResumeID   string
 	ResumeName string
 	ResumeUrl  string
+	ResumeStr  string
 	CreatedAt  time.Time
 }
 

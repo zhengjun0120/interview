@@ -1,6 +1,7 @@
 package cos
 
 import (
+	"ai_interview/biz/resume_service/cos_service"
 	"ai_interview/conf"
 	"ai_interview/pkg/zlog"
 	"bytes"
@@ -15,7 +16,13 @@ import (
 	"strings"
 )
 
-var cosClient *cos.Client
+//var cosClient *cos.Client
+
+type TXCosClient struct {
+	Client *cos.Client
+}
+
+var cosClient *TXCosClient
 
 var (
 	MaxFileSize = int64(50 * 1024 * 1024) // 50MB
@@ -25,7 +32,7 @@ var (
 	DocxMagicNumber = []byte{0x50, 0x4B, 0x03, 0x04}
 )
 
-func GetCosClient() *cos.Client {
+func GetCosClient() cos_service.ICosService {
 	return cosClient
 }
 
@@ -35,18 +42,20 @@ func InitCos() {
 		panic("cos url解析失败" + err.Error())
 	}
 
-	b := &cos.BaseURL{BatchURL: u}
+	b := &cos.BaseURL{BucketURL: u}
 
-	cosClient = cos.NewClient(b, &http.Client{
+	client := cos.NewClient(b, &http.Client{
 		Transport: &cos.AuthorizationTransport{
 			SecretID:  conf.GetConfig().Cos.SecretId,
 			SecretKey: conf.GetConfig().Cos.SecretKey,
 		},
 	})
 
-	if cosClient == nil {
+	if client == nil {
 		panic("cos客户端初始化失败")
 	}
+
+	cosClient = &TXCosClient{Client: client}
 	zlog.Infof("cos客户端初始化成功")
 }
 
@@ -83,11 +92,12 @@ func validateFileRealType(file io.ReadSeeker, filename string) (bool, error) {
 }
 
 // 返回公网url 和error
-func UploadResume(file multipart.File, fileHeader *multipart.FileHeader, resumeID string) (string, error) {
+func (c *TXCosClient) UploadResume(file multipart.File, fileHeader *multipart.FileHeader, resumeID string) (string, error) {
 	if !validateFileSize(fileHeader.Size) {
 		return "", fmt.Errorf("文件大小超出限制")
 	}
 
+	// 获取文件扩展名
 	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
 
 	ok, err := validateFileRealType(file, fileHeader.Filename)
@@ -100,14 +110,26 @@ func UploadResume(file multipart.File, fileHeader *multipart.FileHeader, resumeI
 		}
 	}
 
-	// 构建cos文件路径
-	cosFilePath := fmt.Sprintf("%s/%s", ext, resumeID)
+	ext = strings.TrimPrefix(ext, ".")
 
-	_, err = cosClient.Object.Put(context.Background(), cosFilePath, file, nil)
+	// 构建cos文件路径
+	cosFilePath := fmt.Sprintf("%s/%s.%s", ext, resumeID, ext)
+
+	_, err = c.Client.Object.Put(context.Background(), cosFilePath, file, nil)
 	if err != nil {
-		return "", fmt.Errorf("上传文件失败: %v", err)
+		return "", fmt.Errorf("上传文件失败: %v, %s", err, cosFilePath)
 	}
 
 	return fmt.Sprintf("%s/%s", conf.GetConfig().Cos.BucketUrl, cosFilePath), nil
+
+}
+
+func (c *TXCosClient) DeleteFile(ctx context.Context, resumeUrl string) {
+	key := strings.TrimPrefix(resumeUrl, conf.GetConfig().Cos.BucketUrl+"/")
+
+	_, err := c.Client.Object.Delete(ctx, key)
+	if err != nil {
+		zlog.Errorf("删除文件失败: %v, %s", err, resumeUrl)
+	}
 
 }

@@ -37,9 +37,9 @@ func (cs *CodeService) CaptchaSend(way types.CaptchaWayType, key string) error {
 	}
 
 	// 发送
-	if err := cs.sms.SendCaptcha(cs.c, key, capcha.CaptchaCode); err != nil {
-		return error_msg.ErrorCaptchaSend
-	}
+	//if err := cs.sms.SendCaptcha(cs.c, key, capcha.CaptchaCode); err != nil {
+	//	return error_msg.ErrorCaptchaSend
+	//}
 	return nil
 }
 

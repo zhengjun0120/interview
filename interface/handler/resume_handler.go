@@ -51,14 +51,19 @@ func (h *Handler) GetTalent(gCtx *gin.Context) {
 		return
 	}
 
-	var err error
-
 	if query == "all" {
 		serviceResp, err := h.ResumeServer.GetTalentAll(ctx)
 		if err == nil {
 			resp := caster.CastServiceResp2GetTalentAllResp(serviceResp)
 			r.Success(resp)
 			return
+		} else {
+			msgCode := ErrorToMsgCode(err)
+			if msgCode == response.COMMON_FAIL {
+				msgCode.Msg = err.Error()
+			}
+			zlog.Errorf("GetTalent接口调用失败，%v", err)
+			r.Error(msgCode)
 		}
 	} else {
 		serviceResp, err := h.ResumeServer.GetTalentInterview(ctx)
@@ -66,13 +71,14 @@ func (h *Handler) GetTalent(gCtx *gin.Context) {
 			resp := caster.CastServiceResp2GetTalentInterviewResp(serviceResp)
 			r.Success(resp)
 			return
+		} else {
+			msgCode := ErrorToMsgCode(err)
+			if msgCode == response.COMMON_FAIL {
+				msgCode.Msg = err.Error()
+			}
+			zlog.Errorf("GetTalent接口调用失败，%v", err)
+			r.Error(msgCode)
 		}
 	}
 
-	msgCode := ErrorToMsgCode(err)
-	if msgCode == response.COMMON_FAIL {
-		msgCode.Msg = err.Error()
-	}
-	r.Error(msgCode)
-	zlog.Errorf("GetTalent接口调用失败，%v", err)
 }

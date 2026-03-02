@@ -44,10 +44,13 @@ var (
 	TALENT_TARGET_POSITION_NOT_NULL = errors.New("职位不能为空")
 	TALENT_MATCH_SCORE_INVALID      = errors.New("匹配分数无效")
 
-	CONVERSATION_ID_NOT_NULL = errors.New("对话ID不能为空")
+	TALENT_ID_NOT_EXIST = errors.New("人才ID不存在")
+
+	ROOM_ID_NOT_NULL         = errors.New("房间ID不能为空")
 	MESSAGE_ROLE_ERROR       = errors.New("消息角色错误")
 	MESSAGE_CONTENT_NOT_NULL = errors.New("消息内容不能为空")
-	CONVERSATION_NOT_EXIST   = errors.New("对话不存在")
+	ROOM_NOT_EXIST           = errors.New("房间不存在")
+	ROOM_ALREADY_ENDED       = errors.New("面设已结束")
 
 	JOB_PROFILE_ID_NOT_NULL = errors.New("职位ID不能为空")
 	JOB_TITLE_NOT_NULL      = errors.New("职位名称不能为空")
@@ -55,4 +58,9 @@ var (
 
 	JOB_PROFILE_COMPETENCIES_NOT_NULL = errors.New("职位竞争力不能为空")
 	JOB_TITLE_ALREADY_EXISTS          = errors.New("职位名称已存在")
+
+	MESSAGE_ID_NOT_NULL   = errors.New("消息ID不能为空")
+	MESSAGE_FROM_ERROR    = errors.New("消息发送者错误")
+	MESSAGE_TEXT_NOT_NULL = errors.New("消息内容不能为空")
+	TAG_NOT_NULL          = errors.New("标签不能为空")
 )

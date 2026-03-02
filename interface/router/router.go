@@ -38,6 +38,9 @@ func register() *gin.Engine {
 	jobProfileGroup := api.Group("/job_profile", middleware.JWTAuth())
 	loadJobProfileService(jobProfileGroup)
 
+	interviewGroup := api.Group("/interview", middleware.JWTAuth())
+	loadInterviewService(interviewGroup)
+
 	return r
 
 }
@@ -49,6 +52,16 @@ func loadResumeService(r *gin.RouterGroup) {
 	// /api/v1/resume/upload POST 上传简历
 	r.POST("/upload", handler.GetHandler().UploadResume)
 
+}
+func loadInterviewService(r *gin.RouterGroup) {
+	// /api/v1/interview/create POST 创建面试
+	r.POST("/create", handler.GetHandler().CreateInterview)
+
+	// /api/v1/interview/check_room_permission POST 检查房间权限
+	r.POST("/check_room_permission", handler.GetHandler().CheckRoomPermission)
+
+	// /api/v1/interview/ws/join?room_id=123&token=123 GET 加入面试房间
+	r.GET("/ws/join", handler.GetHandler().JoinInterviewRoom)
 }
 
 func loadTalentService(r *gin.RouterGroup) {

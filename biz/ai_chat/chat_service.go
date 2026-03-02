@@ -7,5 +7,6 @@ import (
 
 type IChatService interface {
 	Chat(ctx context.Context, messages []entity.Message) (string, error)
-	DocxChat(ctx context.Context, dockUrl, jobProfile string) (string, error)
+	DocxToTalentDataChat(ctx context.Context, dockUrl, jobProfile string) (string, error)
+	DocxToResumeStrChat(ctx context.Context, dockUrl string) (string, error)
 }

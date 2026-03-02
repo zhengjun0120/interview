@@ -29,4 +29,20 @@ type ChatRepo interface {
 
 	//删除某面试+该面试的会话内容
 	DeleteInterview(ctx context.Context, conversationID string) error
+
+	//新的关于聊天记录的方法
+	//保存面试聊天记录
+	SaveInterviewMessage(ctx context.Context, message entity.InterviewMessage) error
+
+	//获取某面试的聊天记录
+	GetInterviewMessageByConversationID(ctx context.Context, conversationID string) ([]entity.InterviewMessage, error)
+
+	//给某条聊天记录加上标签
+	AddTagToMessage(ctx context.Context, messageID string, tag string) error
+
+	//检查面试房间是否存在
+	CheckRoom(ctx context.Context, roomID, userID string) (bool, error)
+
+	//根据roomID获取面试
+	GetInterviewByRoomID(ctx context.Context, roomID string) (*entity.Interview, error)
 }
