@@ -35,12 +35,15 @@ var ErrorCaptchaExpire = errors.New("验证码过期或未向该手机号发送�
 var ErrorCode2Redis = errors.New("验证码存入redis失败")
 
 var (
-	RESUME_NAME_NOT_NULL            = errors.New("简历名称不能为空")
-	RESUME_ID_NOT_NULL              = errors.New("简历ID不能为空")
-	RESUME_NAME_TOO_LONG            = errors.New("简历名称太长")
+	RESUME_NAME_NOT_NULL = errors.New("简历名称不能为空")
+	RESUME_ID_NOT_NULL   = errors.New("简历ID不能为空")
+	RESUME_NAME_TOO_LONG = errors.New("简历名称太长")
+	RESUME_NOT_EXIST     = errors.New("简历不存在")
+
 	TALENT_ID_NOT_NULL              = errors.New("人才ID不能为空")
 	TALENT_NAME_NOT_NULL            = errors.New("人才名称不能为空")
 	TALENT_NAME_TOO_LONG            = errors.New("人才名称太长")
+	TALENT_NOT_EXIST                = errors.New("人才不存在")
 	TALENT_TARGET_POSITION_NOT_NULL = errors.New("职位不能为空")
 	TALENT_MATCH_SCORE_INVALID      = errors.New("匹配分数无效")
 
@@ -62,5 +65,6 @@ var (
 	MESSAGE_ID_NOT_NULL   = errors.New("消息ID不能为空")
 	MESSAGE_FROM_ERROR    = errors.New("消息发送者错误")
 	MESSAGE_TEXT_NOT_NULL = errors.New("消息内容不能为空")
+	MESSAGE_NOT_EXIST     = errors.New("消息不存在")
 	TAG_NOT_NULL          = errors.New("标签不能为空")
 )

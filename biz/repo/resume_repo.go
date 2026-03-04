@@ -44,4 +44,7 @@ type ResumeRepo interface {
 
 	//检查TalentID是否存在
 	CheckTalentID(ctx context.Context, talentID string) (bool, error)
+
+	//通过TalentID来获取该人才的简历
+	GetResumeByTalentID(ctx context.Context, talentID string) (*entity.Resume, error)
 }

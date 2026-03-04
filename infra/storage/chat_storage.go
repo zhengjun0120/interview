@@ -8,12 +8,8 @@ import (
 	"ai_interview/infra/storage/po"
 	"ai_interview/pkg/error_msg"
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"gorm.io/datatypes"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"time"
 )
 
@@ -25,7 +21,7 @@ type ChatStorage struct {
 
 func InitChatStorage() {
 	db := database.GetDB()
-	if err := db.AutoMigrate(&po.Conversation{}, &po.Interview{}, &po.InterviewMessage{}); err != nil {
+	if err := db.AutoMigrate(&po.Interview{}, &po.InterviewMessage{}); err != nil {
 		panic("chat部分表自动迁移失败: " + err.Error())
 	}
 
@@ -59,8 +55,8 @@ func (c *ChatStorage) CreateInterview(ctx context.Context, userID, talentID, roo
 	return nil
 }
 
-func (c *ChatStorage) EndInterview(ctx context.Context, conversationID string) error {
-	if conversationID == "" {
+func (c *ChatStorage) EndInterview(ctx context.Context, roomID string) error {
+	if roomID == "" {
 		return error_msg.ROOM_ID_NOT_NULL
 	}
 
@@ -68,7 +64,7 @@ func (c *ChatStorage) EndInterview(ctx context.Context, conversationID string) e
 	updates := map[string]interface{}{
 		"interview_end_time": &now,
 	}
-	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("conversation_id = ?", conversationID).Updates(updates).Error
+	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("room_id = ?", roomID).Updates(updates).Error
 	if err != nil {
 		return errorDB(err)
 	}
@@ -98,131 +94,6 @@ func (c *ChatStorage) GetInterviewsByUserID(ctx context.Context, userID string) 
 	return resp, nil
 }
 
-func (c *ChatStorage) GetChatRecordByConversationID(ctx context.Context, conversationID string) ([]entity.Message, error) {
-	if conversationID == "" {
-		return nil, error_msg.ROOM_ID_NOT_NULL
-	}
-
-	var messages []entity.Message
-	var conversation po.Conversation
-	err := c.db.Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).First(&conversation).Error
-	if err != nil {
-		return nil, errorDB(err)
-	}
-	err = json.Unmarshal(conversation.Messages, &messages)
-	if err != nil {
-		return nil, fmt.Errorf("反序列化消息失败: %v", err)
-	}
-	return messages, nil
-}
-
-func (c *ChatStorage) SaveAllMessages(ctx context.Context, conversationID string, messages []entity.Message) error {
-	if conversationID == "" {
-		return error_msg.ROOM_ID_NOT_NULL
-	}
-	jsonData, err := json.Marshal(messages)
-	if err != nil {
-		return fmt.Errorf("序列化消息失败: %v", err)
-	}
-	updates := map[string]interface{}{
-		"messages": datatypes.JSON(jsonData),
-	}
-	err = c.db.Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).Updates(updates).Error
-	if err != nil {
-		return errorDB(err)
-	}
-	return nil
-}
-
-func (c *ChatStorage) AddMessage(ctx context.Context, conversationID string, message entity.Message) error {
-	if conversationID == "" {
-		return error_msg.ROOM_ID_NOT_NULL
-	} else if message.Role == "" || (message.Role != "user" && message.Role != "assistant" && message.Role != "system") {
-		return error_msg.MESSAGE_ROLE_ERROR
-	} else if message.Content == "" {
-		return error_msg.MESSAGE_CONTENT_NOT_NULL
-	}
-
-	err := c.db.Transaction(func(tx *gorm.DB) error {
-		var conversation po.Conversation
-
-		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).First(&conversation).Error
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return error_msg.ROOM_NOT_EXIST
-			}
-			return errorDB(err)
-		}
-
-		var messages []entity.Message
-		if err := json.Unmarshal(conversation.Messages, &messages); err != nil {
-			return fmt.Errorf("反序列化消息失败: %v", err)
-		}
-
-		messages = append(messages, message)
-
-		jsonData, err := json.Marshal(messages)
-		if err != nil {
-			return fmt.Errorf("序列化消息失败: %v", err)
-		}
-
-		err = tx.Model(&po.Conversation{}).Where("conversation_id = ?", conversationID).Update("messages", datatypes.JSON(jsonData)).Error
-		if err != nil {
-			return errorDB(err)
-		}
-		return nil
-
-	})
-
-	if err != nil {
-		return errorDB(err)
-	}
-
-	return nil
-}
-
-func (c *ChatStorage) DeleteInterview(ctx context.Context, conversationID string) error {
-	if conversationID == "" {
-		return error_msg.ROOM_ID_NOT_NULL
-	}
-
-	err := c.db.Transaction(func(tx *gorm.DB) error {
-		err := tx.Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).
-			Delete(&po.Conversation{}).Error
-
-		if err != nil {
-			return errorDB(err)
-		}
-
-		err = tx.Model(&po.Interview{}).WithContext(ctx).Where("conversation_id = ?", conversationID).
-			Delete(&po.Interview{}).Error
-
-		if err != nil {
-			return errorDB(err)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return errorDB(err)
-	}
-	return nil
-}
-
-func (c *ChatStorage) GetInterviewByConversationID(ctx context.Context, conversationID string) (*entity.Interview, error) {
-	if conversationID == "" {
-		return nil, error_msg.ROOM_ID_NOT_NULL
-	}
-
-	var interview entity.Interview
-	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("conversation_id = ?", conversationID).First(&interview).Error
-	if err != nil {
-		return nil, errorDB(err)
-	}
-	return &interview, nil
-}
-
 func (c *ChatStorage) SaveInterviewMessage(ctx context.Context, message entity.InterviewMessage) error {
 	if message.MessageID == "" {
 		return error_msg.MESSAGE_ID_NOT_NULL
@@ -236,6 +107,7 @@ func (c *ChatStorage) SaveInterviewMessage(ctx context.Context, message entity.I
 
 	var messagePo = po.InterviewMessage{
 		MessageID: message.MessageID,
+		UserID:    message.UserID,
 		From:      message.From,
 		Tag:       message.Tag,
 		Text:      message.Text,
@@ -249,13 +121,13 @@ func (c *ChatStorage) SaveInterviewMessage(ctx context.Context, message entity.I
 	return nil
 }
 
-func (c *ChatStorage) GetInterviewMessageByConversationID(ctx context.Context, conversationID string) ([]entity.InterviewMessage, error) {
-	if conversationID == "" {
+func (c *ChatStorage) GetInterviewMessageByRoomID(ctx context.Context, roomID string) ([]entity.InterviewMessage, error) {
+	if roomID == "" {
 		return nil, error_msg.ROOM_ID_NOT_NULL
 	}
 
 	var messages []po.InterviewMessage
-	err := c.db.Model(&po.InterviewMessage{}).WithContext(ctx).Where("conversation_id = ?", conversationID).Order("created_at ASC").Find(&messages).Error
+	err := c.db.Model(&po.InterviewMessage{}).WithContext(ctx).Where("room_id= ?", roomID).Order("created_at ASC").Find(&messages).Error
 	if err != nil {
 		return nil, errorDB(err)
 	}
@@ -264,6 +136,7 @@ func (c *ChatStorage) GetInterviewMessageByConversationID(ctx context.Context, c
 	for i, v := range messages {
 		resp[i] = entity.InterviewMessage{
 			MessageID: v.MessageID,
+			UserID:    v.UserID,
 			From:      v.From,
 			Tag:       v.Tag,
 			Text:      v.Text,
@@ -275,14 +148,23 @@ func (c *ChatStorage) GetInterviewMessageByConversationID(ctx context.Context, c
 	return resp, nil
 }
 
-func (c *ChatStorage) AddTagToMessage(ctx context.Context, messageID string, tag string) error {
+func (c *ChatStorage) AddTagToMessage(ctx context.Context, messageID string, tag string, userID string) error {
 	if messageID == "" {
 		return error_msg.MESSAGE_ID_NOT_NULL
 	} else if tag == "" {
 		return error_msg.TAG_NOT_NULL
 	}
 
-	err := c.db.Model(&po.InterviewMessage{}).WithContext(ctx).Where("message_id = ?", messageID).Update("tag", tag).Error
+	var check po.InterviewMessage
+	err := c.db.Model(&po.InterviewMessage{}).WithContext(ctx).Where("message_id = ? AND user_id = ?", messageID, userID).First(&check).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return error_msg.MESSAGE_NOT_EXIST
+		}
+		return errorDB(err)
+	}
+
+	err = c.db.Model(&po.InterviewMessage{}).WithContext(ctx).Where("message_id = ?", messageID).Update("tag", tag).Error
 	if err != nil {
 		return errorDB(err)
 	}
@@ -307,13 +189,16 @@ func (c *ChatStorage) CheckRoom(ctx context.Context, roomID, userID string) (boo
 	return true, nil
 }
 
-func (c *ChatStorage) GetInterviewByRoomID(ctx context.Context, roomID string) (*entity.Interview, error) {
+func (c *ChatStorage) GetInterviewByRoomID(ctx context.Context, roomID, userID string) (*entity.Interview, error) {
 	if roomID == "" {
 		return nil, error_msg.ROOM_ID_NOT_NULL
 	}
 	var interview po.Interview
-	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("room_id = ?", roomID).First(&interview).Error
+	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("room_id = ? AND user_id = ?", roomID, userID).First(&interview).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, error_msg.ROOM_NOT_EXIST
+		}
 		return nil, errorDB(err)
 	}
 	return &entity.Interview{

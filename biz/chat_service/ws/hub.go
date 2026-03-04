@@ -236,6 +236,7 @@ func (h *Hub) broadcastToRoom(msg Message) {
 
 	// 保存聊天记录 入库
 	err = h.ChatRepo.SaveInterviewMessage(context.Background(), entity.InterviewMessage{
+		UserID:    client.UserID,
 		RoomID:    client.RoomID,
 		From:      client.Role,
 		MessageID: msg.MessageID,

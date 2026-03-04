@@ -14,6 +14,12 @@ type IChatService interface {
 
 	//CheckRoomPermission 预先检查是否符合连接ws条件
 	CheckRoomPermission(ctx context.Context, req *CheckRoomPermissionRequest) (*CheckRoomPermissionResponse, error)
+
+	//给hr的某个问题打标签
+	AddTagToMessage(ctx context.Context, req *AddTagToMessageRequest) error
+
+	// 获取面试时的实时追问
+	GetAiSuggestion(ctx context.Context, req *GetAiSuggestionRequest) (*GetAiSuggestionResponse, error)
 }
 
 // 需要被面试者的ID
@@ -38,4 +44,15 @@ type CheckRoomPermissionRequest struct {
 
 type CheckRoomPermissionResponse struct {
 	Success bool
+}
+
+type AddTagToMessageRequest struct {
+	MessageID string
+	Tag       string
+}
+type GetAiSuggestionRequest struct {
+	RoomID string
+}
+type GetAiSuggestionResponse struct {
+	Text string
 }

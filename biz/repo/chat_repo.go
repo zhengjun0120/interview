@@ -6,8 +6,11 @@ import (
 )
 
 type ChatRepo interface {
+
+	//新的关于聊天记录的方法
+
 	//新建面试
-	CreateInterview(ctx context.Context, userID, talentID, conversationID string) error
+	CreateInterview(ctx context.Context, userID, talentID, roomID string) error
 
 	//结束面试
 	EndInterview(ctx context.Context, conversationID string) error
@@ -15,34 +18,18 @@ type ChatRepo interface {
 	//获取hr的所有面试
 	GetInterviewsByUserID(ctx context.Context, userID string) ([]entity.Interview, error)
 
-	//获取某人才的面试
-	GetInterviewByConversationID(ctx context.Context, conversationID string) (*entity.Interview, error)
-
-	//获取某面试的聊天记录
-	GetChatRecordByConversationID(ctx context.Context, conversationID string) ([]entity.Message, error)
-
-	//保存整个聊天记录
-	SaveAllMessages(ctx context.Context, conversationID string, messages []entity.Message) error
-
-	//在末尾添加单条聊天记录
-	AddMessage(ctx context.Context, conversationID string, message entity.Message) error
-
-	//删除某面试+该面试的会话内容
-	DeleteInterview(ctx context.Context, conversationID string) error
-
-	//新的关于聊天记录的方法
 	//保存面试聊天记录
 	SaveInterviewMessage(ctx context.Context, message entity.InterviewMessage) error
 
 	//获取某面试的聊天记录
-	GetInterviewMessageByConversationID(ctx context.Context, conversationID string) ([]entity.InterviewMessage, error)
+	GetInterviewMessageByRoomID(ctx context.Context, roomID string) ([]entity.InterviewMessage, error)
 
 	//给某条聊天记录加上标签
-	AddTagToMessage(ctx context.Context, messageID string, tag string) error
+	AddTagToMessage(ctx context.Context, messageID string, tag string, userID string) error
 
 	//检查面试房间是否存在
 	CheckRoom(ctx context.Context, roomID, userID string) (bool, error)
 
 	//根据roomID获取面试
-	GetInterviewByRoomID(ctx context.Context, roomID string) (*entity.Interview, error)
+	GetInterviewByRoomID(ctx context.Context, roomID, userID string) (*entity.Interview, error)
 }

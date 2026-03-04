@@ -58,11 +58,12 @@ type Cos struct {
 }
 
 type AiChat struct {
-	ApiKey                     string `yaml:"api_key"`
-	ModelId                    string `yaml:"model_id"`
-	BaseUrl                    string `yaml:"base_url"`
-	ResumeAnalysisSystemPrompt string `yaml:"resume_analysis_system_prompt"`
-	ResumeUrlToStrPrompt       string `yaml:"resume_url_to_str_prompt"`
+	ApiKey                      string `yaml:"api_key"`
+	ModelId                     string `yaml:"model_id"`
+	BaseUrl                     string `yaml:"base_url"`
+	ResumeAnalysisSystemPrompt  string `yaml:"resume_analysis_system_prompt"`
+	ResumeUrlToStrPrompt        string `yaml:"resume_url_to_str_prompt"`
+	InterviewAISuggestionPrompt string `yaml:"interview_ai_suggestion_prompt"`
 }
 
 var config Config

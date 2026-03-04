@@ -1,6 +1,7 @@
 package chat_service
 
 import (
+	"ai_interview/biz/ai_chat"
 	"ai_interview/biz/chat_service/ws"
 	"ai_interview/biz/entity"
 	"ai_interview/biz/repo"
@@ -11,12 +12,13 @@ import (
 )
 
 type ChatService struct {
-	ChatRepo   repo.ChatRepo
-	ResumeRepo repo.ResumeRepo
+	ChatRepo      repo.ChatRepo
+	ResumeRepo    repo.ResumeRepo
+	AiChatService ai_chat.IChatService
 }
 
-func NewChatService(chatRepo repo.ChatRepo, resumeRepo repo.ResumeRepo) *ChatService {
-	return &ChatService{ChatRepo: chatRepo, ResumeRepo: resumeRepo}
+func NewChatService(chatRepo repo.ChatRepo, resumeRepo repo.ResumeRepo, aiChatService ai_chat.IChatService) *ChatService {
+	return &ChatService{ChatRepo: chatRepo, ResumeRepo: resumeRepo, AiChatService: aiChatService}
 }
 
 func (c *ChatService) CreateInterviewRoom(ctx context.Context, req *types.CreateInterviewRoomRequest) (*types.CreateInterviewRoomResponse, error) {
@@ -105,4 +107,45 @@ func (c *ChatService) JoinInterviewRoom(ctx context.Context, req *types.JoinInte
 
 	return nil
 
+}
+
+func (c *ChatService) AddTagToMessage(ctx context.Context, req *types.AddTagToMessageRequest) error {
+	userID, ok := entity.GetUserID(ctx)
+	if !ok {
+		return error_msg.GET_USER_ID_ERROR
+	}
+
+	err := c.ChatRepo.AddTagToMessage(ctx, req.MessageID, req.Tag, userID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *ChatService) GetAiSuggestion(ctx context.Context, req *types.GetAiSuggestionRequest) (*types.GetAiSuggestionResponse, error) {
+	userID, ok := entity.GetUserID(ctx)
+	if !ok {
+		return nil, error_msg.GET_USER_ID_ERROR
+	}
+
+	interview, err := c.ChatRepo.GetInterviewByRoomID(ctx, req.RoomID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	resume, err := c.ResumeRepo.GetResumeByTalentID(ctx, interview.TalentID)
+	if err != nil {
+		return nil, err
+	}
+
+	messages, err := c.ChatRepo.GetInterviewMessageByRoomID(ctx, req.RoomID)
+	if err != nil {
+		return nil, err
+	}
+
+	aiSuggestion, err := c.AiChatService.InterviewAiSuggestionChat(ctx, messages, resume.ResumeStr, resume.ResumeUrl)
+	if err != nil {
+		return nil, err
+	}
+	return &types.GetAiSuggestionResponse{Text: aiSuggestion}, nil
 }

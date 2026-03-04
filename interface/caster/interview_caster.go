@@ -36,3 +36,21 @@ func CastJoinInterviewRoomReq2ServiceParams(req *def.JoinInterviewRoomRequest) *
 		Conn:   req.Conn,
 	}
 }
+
+func CastAddTagToMessageReq2ServiceParams(req *def.AddTagToMessageRequest) *types.AddTagToMessageRequest {
+	return &types.AddTagToMessageRequest{
+		MessageID: req.MessageID,
+		Tag:       req.Tag,
+	}
+}
+
+func CastGetAiSuggestionReq2ServiceParams(req *def.GetAiSuggestionRequest) *types.GetAiSuggestionRequest {
+	return &types.GetAiSuggestionRequest{
+		RoomID: req.RoomID,
+	}
+}
+func CastServiceResp2GetAiSuggestionResp(resp *types.GetAiSuggestionResponse) *def.GetAiSuggestionResponse {
+	return &def.GetAiSuggestionResponse{
+		Text: resp.Text,
+	}
+}

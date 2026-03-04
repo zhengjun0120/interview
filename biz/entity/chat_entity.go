@@ -8,12 +8,6 @@ type Message struct {
 	CreatedAt time.Time `json:"created_at"` // 创建时间
 }
 
-// Conversation ai 聊天会话
-type Conversation struct {
-	ConversationID string    // 聊天会话ID
-	Messages       []Message // 聊天消息
-}
-
 // 面试
 type Interview struct {
 	UserID             string     // 用户ID
@@ -26,6 +20,7 @@ type Interview struct {
 
 type InterviewMessage struct {
 	MessageID string
+	UserID    string
 	RoomID    string
 	From      string
 	Text      string

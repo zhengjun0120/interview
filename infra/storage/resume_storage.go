@@ -348,3 +348,33 @@ func (r *ResumeStorage) CheckTalentID(ctx context.Context, talentID string) (boo
 	}
 	return true, nil
 }
+
+// 根据 talentID 获取简历
+func (r *ResumeStorage) GetResumeByTalentID(ctx context.Context, talentID string) (*entity.Resume, error) {
+	if talentID == "" {
+		return nil, error_msg.TALENT_ID_NOT_NULL
+	}
+
+	var resumePo po.Resume
+	err := r.db.WithContext(ctx).
+		Model(&po.Resume{}).Joins("JOIN talent_pools ON talent_pools.resume_id = resumes.resume_id"). // 关联 talent_pools 表
+		Where("talent_pools.talent_id = ?", talentID).
+		Select("resumes.*").
+		First(&resumePo).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, error_msg.RESUME_NOT_EXIST
+		}
+		return nil, errorDB(err)
+	}
+
+	return &entity.Resume{
+		ResumeID:   resumePo.ResumeID,
+		ResumeName: resumePo.ResumeName,
+		ResumeUrl:  resumePo.ResumeUrl,
+		UserID:     resumePo.UserID,
+		ResumeStr:  resumePo.ResumeStr,
+		CreatedAt:  resumePo.CreatedAt,
+	}, nil
+}

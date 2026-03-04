@@ -62,6 +62,12 @@ func loadInterviewService(r *gin.RouterGroup) {
 
 	// /api/v1/interview/ws/join?room_id=123&token=123 GET 加入面试房间
 	r.GET("/ws/join", handler.GetHandler().JoinInterviewRoom)
+
+	// /api/v1/interview/message/add_tag POST 添加消息标签
+	r.POST("/message/add_tag", handler.GetHandler().AddTagToMessage)
+
+	// /api/v1/interview/message/ai_suggestion POST 获取消息的 AI 建议
+	r.POST("/message/ai_suggestion", handler.GetHandler().GetAiSuggestion)
 }
 
 func loadTalentService(r *gin.RouterGroup) {

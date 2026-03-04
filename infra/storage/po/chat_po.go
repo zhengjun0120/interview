@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Conversation 会话表
+// 会话表 弃用
 type Conversation struct {
 	ID             int            `gorm:"column:id;primary_key;autoIncrement"`    //主键
 	ConversationID string         `gorm:"column:conversation_id;not null;unique"` //会话ID
@@ -31,7 +31,8 @@ type InterviewMessage struct {
 	ID        int    `gorm:"column:id;primary_key;autoIncrement"`
 	MessageID string `gorm:"column:message_id;not null;unique"`
 	RoomID    string `gorm:"column:room_id;not null"`
-	From      string `gorm:"column:from;not null"`       // 发送者Hr 或者 candidate
+	From      string `gorm:"column:from;not null"` // 发送者Hr 或者 candidate
+	UserID    string `gorm:"column:user_id;not null"`
 	Text      string `gorm:"column:text;not null"`       // 消息内容
 	Tag       string `gorm:"column:tag"`                 // HR标签
 	Type      string `gorm:"column:type;default:'chat'"` // 消息类型

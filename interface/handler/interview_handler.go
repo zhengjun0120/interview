@@ -85,3 +85,50 @@ func (h *Handler) JoinInterviewRoom(gCtx *gin.Context) {
 	}
 
 }
+
+func (h *Handler) AddTagToMessage(gCtx *gin.Context) {
+	ctx := gCtx.Request.Context()
+	var req def.AddTagToMessageRequest
+	r := response.NewResponse(gCtx)
+	if err := gCtx.ShouldBindJSON(&req); err != nil {
+		r.Error(response.PARAM_ERROR)
+		return
+	}
+
+	err := h.ChatServer.AddTagToMessage(ctx, caster.CastAddTagToMessageReq2ServiceParams(&req))
+	if err != nil {
+		msgCode := ErrorToMsgCode(err)
+		if msgCode == response.COMMON_FAIL {
+			msgCode.Msg = err.Error()
+		}
+		r.Error(msgCode)
+		zlog.Errorf("AddTagToMessage接口调用失败，%v", err)
+		return
+	} else {
+		r.Success(nil)
+	}
+}
+
+func (h *Handler) GetAiSuggestion(gCtx *gin.Context) {
+	ctx := gCtx.Request.Context()
+	var req def.GetAiSuggestionRequest
+	r := response.NewResponse(gCtx)
+
+	if err := gCtx.ShouldBindJSON(&req); err != nil {
+		r.Error(response.PARAM_ERROR)
+		return
+	}
+
+	serviceResp, err := h.ChatServer.GetAiSuggestion(ctx, caster.CastGetAiSuggestionReq2ServiceParams(&req))
+	if err != nil {
+		msgCode := ErrorToMsgCode(err)
+		if msgCode == response.COMMON_FAIL {
+			msgCode.Msg = err.Error()
+		}
+		r.Error(msgCode)
+		zlog.Errorf("GetAiSuggestion接口调用失败，%v", err)
+		return
+	} else {
+		r.Success(caster.CastServiceResp2GetAiSuggestionResp(serviceResp))
+	}
+}
