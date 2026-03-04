@@ -53,7 +53,7 @@ func main() {
 	us := user_service.NewUserService(storage.GetUserStorage())
 	rs := resume_service.NewResumeService(storage.GetResumeStorage(), storage.GetChatStorage(), storage.GetJobProfileStorage(), ai_chat.GetAiClient(), cos.GetCosClient())
 	js := job_profile_service.NewJobProfileService(storage.GetJobProfileStorage())
-	cs := chat_service.NewChatService(storage.GetChatStorage(), storage.GetResumeStorage())
+	cs := chat_service.NewChatService(storage.GetChatStorage(), storage.GetResumeStorage(), ai_chat.GetAiClient())
 
 	// 初始化handler
 	handler.InitHandler(us, rs, js, cs)
