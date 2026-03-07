@@ -2,11 +2,20 @@ package entity
 
 import "time"
 
+var (
+	InterviewStatusInterviewed   = "已面试" // 已面试
+	InterviewStatusUninterviewed = "未面试" // 未面试
+	// 录用状态（与面试状态分开，更清晰，避免状态混淆）
+	HireStatusHired    = "已录用" // 已录用
+	HireStatusNotHired = "未录用" // 未录用
+)
+
 type Resume struct {
 	UserID     string
 	ResumeID   string
 	ResumeName string
 	ResumeUrl  string
+	ResumeStr  string
 	CreatedAt  time.Time
 }
 

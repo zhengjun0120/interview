@@ -29,7 +29,7 @@ type Mysql struct {
 
 type Redis struct {
 	Host     string `yaml:"host"`
-	Port     string `yaml:"port"`
+	Port     int    `yaml:"port"`
 	DB       int    `yaml:"db"`
 	Password string `yaml:"password"`
 }
@@ -58,10 +58,13 @@ type Cos struct {
 }
 
 type AiChat struct {
-	ApiKey                     string `yaml:"api_key"`
-	ModelId                    string `yaml:"model_id"`
-	BaseUrl                    string `yaml:"base_url"`
-	ResumeAnalysisSystemPrompt string `yaml:"resume_analysis_system_prompt"`
+	ApiKey                        string `yaml:"api_key"`
+	ModelId                       string `yaml:"model_id"`
+	BaseUrl                       string `yaml:"base_url"`
+	ResumeAnalysisSystemPrompt    string `yaml:"resume_analysis_system_prompt"`
+	ResumeUrlToStrPrompt          string `yaml:"resume_url_to_str_prompt"`
+	InterviewAISuggestionPrompt   string `yaml:"interview_ai_suggestion_prompt"`
+	InterviewMessageAnalysePrompt string `yaml:"interview_message_analyse_prompt"`
 }
 
 var config Config

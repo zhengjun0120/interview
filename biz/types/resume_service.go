@@ -7,11 +7,24 @@ import (
 )
 
 type IResumeService interface {
+
+	// 上传简历
 	UploadResume(ctx context.Context, req *UploadResumeParams) (*UploadResumeResponse, error)
 
+	// 获取所有人才
 	GetTalentAll(ctx context.Context) ([]GetTalentAllResponse, error)
 
+	// 获取已面试人才
 	GetTalentInterview(ctx context.Context) ([]GetTalentInterviewResponse, error)
+
+	// 获取简历下载链接
+	GetResumeUrl(ctx context.Context, req *GetResumeUrlRequest) (*GetResumeUrlResponse, error)
+
+	// 获取人才报告
+	GetTalentReport(ctx context.Context, req *GetTalentReportRequest) (*GetTalentReportResponse, error)
+
+	// 标记人才 录用或淘汰
+	MarkTalentHireStatus(ctx context.Context, req *MarkTalentHireStatusRequest) error
 }
 
 type UploadResumeParams struct {
@@ -49,4 +62,30 @@ type GetTalentInterviewResponse struct {
 	HireStatus     string
 	CreatedAt      time.Time
 	InterviewTime  int
+}
+
+type GetResumeUrlRequest struct {
+	TalentID string
+}
+
+type GetResumeUrlResponse struct {
+	ResumeUrl string
+}
+
+type GetTalentReportRequest struct {
+	TalentID string
+}
+
+type GetTalentReportQuestionArrJson struct {
+	Question   string `json:"question"`
+	Answer     string `json:"answer"`
+	AiAnalysis string `json:"ai_analysis"`
+}
+type GetTalentReportResponse struct {
+	List []GetTalentReportQuestionArrJson
+}
+
+type MarkTalentHireStatusRequest struct {
+	TalentID   string
+	HireStatus string
 }

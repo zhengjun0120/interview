@@ -8,6 +8,7 @@ import (
 	"ai_interview/pkg/error_msg"
 	"ai_interview/pkg/zlog"
 	"context"
+	"errors"
 	"gorm.io/gorm"
 )
 
@@ -41,6 +42,7 @@ func (r *ResumeStorage) CreateResume(ctx context.Context, resume *entity.Resume)
 	resumePO.ResumeName = resume.ResumeName
 	resumePO.ResumeUrl = resume.ResumeUrl
 	resumePO.UserID = resume.UserID
+	resumePO.ResumeStr = resume.ResumeStr
 
 	err := r.db.WithContext(ctx).Create(&resumePO).Error
 	if err != nil {
@@ -76,6 +78,7 @@ func (r *ResumeStorage) GetResume(ctx context.Context, resumeID, userID string) 
 		ResumeName: resumePO.ResumeName,
 		ResumeUrl:  resumePO.ResumeUrl,
 		UserID:     resumePO.UserID,
+		ResumeStr:  resumePO.ResumeStr,
 	}, nil
 }
 
@@ -246,7 +249,7 @@ func (r *ResumeStorage) CreateResumeAndTalent(ctx context.Context, resume *entit
 		return error_msg.TALENT_TARGET_POSITION_NOT_NULL
 	} else if talent.MatchScore < 0 || talent.MatchScore > 100 {
 		return error_msg.TALENT_MATCH_SCORE_INVALID
-	} else if resume.ResumeName != "" {
+	} else if resume.ResumeName == "" {
 		return error_msg.RESUME_NAME_NOT_NULL
 	}
 
@@ -265,6 +268,7 @@ func (r *ResumeStorage) CreateResumeAndTalent(ctx context.Context, resume *entit
 	resumePO.ResumeName = resume.ResumeName
 	resumePO.ResumeUrl = resume.ResumeUrl
 	resumePO.UserID = resume.UserID
+	resumePO.ResumeStr = resume.ResumeStr
 	resumePO.CreatedAt = resume.CreatedAt
 
 	talentPO.TalentID = talent.TalentID
@@ -276,6 +280,7 @@ func (r *ResumeStorage) CreateResumeAndTalent(ctx context.Context, resume *entit
 	talentPO.InterviewStatus = talent.InterviewStatus
 	talentPO.UserID = talent.UserID
 	talentPO.CreatedAt = talent.CreatedAt
+	talentPO.ResumeID = talent.ResumeID
 
 	err := tx.Model(&po.Resume{}).WithContext(ctx).Create(&resumePO).Error
 	if err != nil {
@@ -329,4 +334,63 @@ func (r *ResumeStorage) DeleteResumeAndTalent(ctx context.Context, resumeID, tal
 		return errorDB(err)
 	}
 	return nil
+}
+
+// 检查 talentID 是否存在
+func (r *ResumeStorage) CheckTalentID(ctx context.Context, talentID string) (bool, error) {
+	var talentPO po.TalentPool
+	err := r.db.Model(&po.TalentPool{}).WithContext(ctx).Where("talent_id = ?", talentID).First(&talentPO).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, errorDB(err)
+	}
+	return true, nil
+}
+
+// 根据 talentID 获取简历
+func (r *ResumeStorage) GetResumeByTalentID(ctx context.Context, talentID string) (*entity.Resume, error) {
+	if talentID == "" {
+		return nil, error_msg.TALENT_ID_NOT_NULL
+	}
+
+	var resumePo po.Resume
+	err := r.db.WithContext(ctx).
+		Model(&po.Resume{}).Joins("JOIN talent_pools ON talent_pools.resume_id = resumes.resume_id"). // 关联 talent_pools 表
+		Where("talent_pools.talent_id = ?", talentID).
+		Select("resumes.*").
+		First(&resumePo).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, error_msg.RESUME_NOT_EXIST
+		}
+		return nil, errorDB(err)
+	}
+
+	return &entity.Resume{
+		ResumeID:   resumePo.ResumeID,
+		ResumeName: resumePo.ResumeName,
+		ResumeUrl:  resumePo.ResumeUrl,
+		UserID:     resumePo.UserID,
+		ResumeStr:  resumePo.ResumeStr,
+		CreatedAt:  resumePo.CreatedAt,
+	}, nil
+}
+
+// 标记人才，录用或淘汰
+func (r *ResumeStorage) MarkTalentHireStatus(ctx context.Context, talentID, userID, status string) error {
+	if talentID == "" {
+		return error_msg.TALENT_ID_NOT_NULL
+	} else if status != entity.HireStatusHired && status != entity.HireStatusNotHired {
+		return error_msg.HIRE_STATUS_ERROR
+	}
+
+	err := r.db.Model(&po.TalentPool{}).WithContext(ctx).Where("talent_id = ? AND user_id = ?", talentID, userID).Update("hire_status", status).Error
+	if err != nil {
+		return errorDB(err)
+	}
+	return nil
+
 }

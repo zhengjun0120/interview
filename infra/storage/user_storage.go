@@ -27,6 +27,31 @@ type UserStorage struct {
 	client *redis.Client
 }
 
+func (u *UserStorage) Get(c context.Context, key string) (interface{}, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u *UserStorage) Set(c context.Context, key string, value any, expiration time.Duration) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u *UserStorage) HGet(c context.Context, key string, receiver any) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u *UserStorage) HSet(c context.Context, key string, value any, expiration time.Duration) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (u *UserStorage) Del(c context.Context, key string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func InitUserStorage() {
 	db := database.GetDB()
 	client := database.GetRedis()
@@ -162,6 +187,19 @@ func (u *UserStorage) UpdateUsername(ctx context.Context, userID string, newUser
 func (u *UserStorage) CheckEmail(ctx context.Context, email string, userType string) (bool, error) {
 	var user po.User
 	err := u.db.WithContext(ctx).Model(&po.User{}).Where("type = ? AND email = ?", userType, email).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, errorDB(err)
+	}
+	return true, nil
+}
+
+// 检查用户是否存在 存在返回true 不存在返回false
+func (u *UserStorage) CheckUser(ctx context.Context, userID string) (bool, error) {
+	var user po.User
+	err := u.db.WithContext(ctx).Model(&po.User{}).Where("user_id = ?", userID).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil

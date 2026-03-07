@@ -4,13 +4,14 @@ import (
 	"ai_interview/biz/ai_chat"
 	"ai_interview/biz/entity"
 	"ai_interview/biz/repo"
+	"ai_interview/biz/resume_service/cos_service"
 	"ai_interview/biz/types"
-	"ai_interview/infra/cos"
 	"ai_interview/pkg/error_msg"
 	"ai_interview/util"
 	"context"
 	"encoding/json"
 	"fmt"
+	"gorm.io/datatypes"
 	"math"
 	"strconv"
 	"strings"
@@ -24,10 +25,11 @@ type ResumeService struct {
 	chatRepo       repo.ChatRepo
 	jobProfileRepo repo.JobProfileRepo
 	chatService    ai_chat.IChatService
+	cosService     cos_service.ICosService
 }
 
-func NewResumeService(resumeRepo repo.ResumeRepo, chatRepo repo.ChatRepo, jobProfileRepo repo.JobProfileRepo, chatService ai_chat.IChatService) *ResumeService {
-	return &ResumeService{resumeRepo: resumeRepo, chatRepo: chatRepo, jobProfileRepo: jobProfileRepo, chatService: chatService}
+func NewResumeService(resumeRepo repo.ResumeRepo, chatRepo repo.ChatRepo, jobProfileRepo repo.JobProfileRepo, chatService ai_chat.IChatService, cosService cos_service.ICosService) *ResumeService {
+	return &ResumeService{resumeRepo: resumeRepo, chatRepo: chatRepo, jobProfileRepo: jobProfileRepo, chatService: chatService, cosService: cosService}
 }
 
 func (h *ResumeService) jobProfileEntity2String(jobProfiles []entity.JobProfile) string {
@@ -90,11 +92,13 @@ func (h *ResumeService) UploadResume(ctx context.Context, req *types.UploadResum
 
 	resumeID := util.GenerateStringID()
 
-	resumeUrl, err := cos.UploadResume(req.File, req.FileHeader, resumeID)
+	// 上传简历到cos
+	resumeUrl, err := h.cosService.UploadResume(req.File, req.FileHeader, resumeID)
 	if err != nil {
 		return nil, err
 	}
 
+	// 保存简历信息
 	resume := entity.Resume{
 		ResumeID:   resumeID,
 		ResumeName: req.FileHeader.Filename,
@@ -103,24 +107,38 @@ func (h *ResumeService) UploadResume(ctx context.Context, req *types.UploadResum
 		CreatedAt:  time.Now(),
 	}
 
+	// 获取用户岗位画像
 	jobProfiles, err := h.jobProfileRepo.GetJobProfileByUserID(ctx, userID)
 	if err != nil {
+		h.cosService.DeleteFile(ctx, resumeUrl)
 		return nil, err
 	}
 
+	// 将岗位画像转换为字符串
 	jobProfileStr := h.jobProfileEntity2String(jobProfiles)
 
-	messageStr, err := h.chatService.DocxChat(ctx, resumeUrl, jobProfileStr)
+	// 解析简历核心信息
+	messageStr, err := h.chatService.DocxToTalentDataChat(ctx, resumeUrl, jobProfileStr)
 	if err != nil {
+		h.cosService.DeleteFile(ctx, resumeUrl)
 		return nil, err
 	}
-
 	var talentJson entity.TalentJson
 	err = json.Unmarshal([]byte(messageStr), &talentJson)
 	if err != nil {
+		h.cosService.DeleteFile(ctx, resumeUrl)
 		return nil, fmt.Errorf("解析ai消息失败: %v\n 原始消息: %s", err, messageStr)
 	}
 
+	// 获取简历文本内容
+	resumeStr, err := h.chatService.DocxToResumeStrChat(ctx, resumeUrl)
+	if err != nil {
+		h.cosService.DeleteFile(ctx, resumeUrl)
+		return nil, err
+	}
+	// 保存简历文本内容
+	resume.ResumeStr = resumeStr
+	// 创建简历和人才信息
 	var talentEntity = entity.Talent{
 		UserID:          userID,
 		ResumeID:        resumeID,
@@ -128,14 +146,16 @@ func (h *ResumeService) UploadResume(ctx context.Context, req *types.UploadResum
 		FullName:        talentJson.FullName,
 		TargetPosition:  talentJson.TargetPosition,
 		MatchScore:      talentJson.MatchScore,
-		InterviewStatus: "未面试",
+		InterviewStatus: entity.InterviewStatusUninterviewed, //未面试
 		CoreAdvantages:  talentJson.CoreAdvantages,
-		HireStatus:      "未录用",
+		HireStatus:      entity.HireStatusNotHired, //未录用
 		CreatedAt:       time.Now(),
 	}
 
+	// 保存简历和人才信息
 	err = h.resumeRepo.CreateResumeAndTalent(ctx, &resume, &talentEntity)
 	if err != nil {
+		h.cosService.DeleteFile(ctx, resumeUrl)
 		return nil, err
 	}
 
@@ -213,7 +233,12 @@ func (h *ResumeService) GetTalentInterview(ctx context.Context) ([]types.GetTale
 
 	timeMap := make(map[string]int)
 	for _, v := range interviews {
-		timeMap[v.TalentID] = h.getInterviewTimeSeconds(v.InterviewStartTime, v.InterviewEndTime)
+		if v.InterviewEndTime == nil {
+			timeMap[v.TalentID] = 0
+		} else {
+			timeMap[v.TalentID] = h.getInterviewTimeSeconds(v.InterviewStartTime, *v.InterviewEndTime)
+		}
+
 	}
 
 	resp := make([]types.GetTalentInterviewResponse, len(talents))
@@ -231,4 +256,84 @@ func (h *ResumeService) GetTalentInterview(ctx context.Context) ([]types.GetTale
 
 	return resp, nil
 
+}
+
+func (h *ResumeService) GetResumeUrl(ctx context.Context, req *types.GetResumeUrlRequest) (*types.GetResumeUrlResponse, error) {
+	userID, ok := entity.GetUserID(ctx)
+	if !ok {
+		return nil, error_msg.GET_USER_ID_ERROR
+	}
+
+	resume, err := h.resumeRepo.GetResumeByTalentID(ctx, req.TalentID)
+	if err != nil {
+		return nil, err
+	}
+	if resume.UserID != userID {
+		return nil, error_msg.RESUME_NOT_EXIST
+	}
+
+	return &types.GetResumeUrlResponse{
+		ResumeUrl: resume.ResumeUrl,
+	}, nil
+}
+
+// 获取面试报告
+func (h *ResumeService) GetTalentReport(ctx context.Context, req *types.GetTalentReportRequest) (*types.GetTalentReportResponse, error) {
+	userID, ok := entity.GetUserID(ctx)
+	if !ok {
+		return nil, error_msg.GET_USER_ID_ERROR
+	}
+
+	interview, err := h.chatRepo.GetInterviewByTalentID(ctx, req.TalentID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if interview.TalentReport != nil {
+		var getTalentReportQuestionJson []types.GetTalentReportQuestionArrJson
+		err := json.Unmarshal(interview.TalentReport, &getTalentReportQuestionJson)
+		if err != nil {
+			return nil, fmt.Errorf("解析ai消息失败: %v\n 原始消息: %s", err, interview.TalentReport)
+		}
+		return &types.GetTalentReportResponse{
+			List: getTalentReportQuestionJson,
+		}, nil
+	}
+
+	message, err := h.chatRepo.GetInterviewMessageByRoomID(ctx, interview.RoomID)
+	if err != nil {
+		return nil, err
+	}
+
+	aiResp, err := h.chatService.InterviewMessageAnalyseChat(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+
+	var getTalentReportQuestionJson []types.GetTalentReportQuestionArrJson
+	err = json.Unmarshal([]byte(aiResp), &getTalentReportQuestionJson)
+	if err != nil {
+		return nil, fmt.Errorf("解析ai消息失败: %v\n 原始消息: %s", err, aiResp)
+	}
+
+	err = h.chatRepo.SaveTalentReport(ctx, datatypes.JSON(aiResp), userID, req.TalentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.GetTalentReportResponse{
+		List: getTalentReportQuestionJson,
+	}, nil
+}
+
+func (h *ResumeService) MarkTalentHireStatus(ctx context.Context, req *types.MarkTalentHireStatusRequest) error {
+	userID, ok := entity.GetUserID(ctx)
+	if !ok {
+		return error_msg.GET_USER_ID_ERROR
+	}
+	err := h.resumeRepo.MarkTalentHireStatus(ctx, req.TalentID, userID, req.HireStatus)
+	if err != nil {
+		return err
+	}
+	return nil
 }

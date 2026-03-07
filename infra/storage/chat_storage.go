@@ -1,19 +1,16 @@
 package storage
 
 import (
+	"ai_interview/biz/chat_service/ws"
 	"ai_interview/biz/entity"
 	"ai_interview/biz/repo"
 	"ai_interview/infra/database"
 	"ai_interview/infra/storage/po"
 	"ai_interview/pkg/error_msg"
-	"ai_interview/pkg/zlog"
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"time"
 )
 
@@ -25,7 +22,7 @@ type ChatStorage struct {
 
 func InitChatStorage() {
 	db := database.GetDB()
-	if err := db.AutoMigrate(&po.Conversation{}, &po.Interview{}); err != nil {
+	if err := db.AutoMigrate(&po.Interview{}, &po.InterviewMessage{}); err != nil {
 		panic("chat部分表自动迁移失败: " + err.Error())
 	}
 
@@ -36,198 +33,240 @@ func GetChatStorage() repo.ChatRepo {
 	return cs
 }
 
+func (c *ChatStorage) po2EntityInterview(po po.Interview) entity.Interview {
+	return entity.Interview{
+		RoomID:             po.RoomID,
+		UserID:             po.UserID,
+		TalentID:           po.TalentID,
+		TalentReport:       po.TalentReport,
+		InterviewStartTime: po.InterviewStartTime,
+		InterviewEndTime:   po.InterviewEndTime,
+		CreatedAt:          po.CreatedAt,
+	}
+}
+
 // 创建并开始面试
-func (c *ChatStorage) CreateInterview(ctx context.Context, userID, talentID, conversationID string) error {
+func (c *ChatStorage) CreateInterview(ctx context.Context, userID, talentID, roomID string) error {
 	if talentID == "" {
 		return error_msg.TALENT_ID_NOT_NULL
-	} else if conversationID == "" {
-		return error_msg.CONVERSATION_ID_NOT_NULL
-	}
-
-	conversationPo := po.Conversation{
-		ConversationID: conversationID,
-		Messages:       datatypes.JSON("[]"),
+	} else if roomID == "" {
+		return error_msg.ROOM_ID_NOT_NULL
 	}
 
 	interviewPo := po.Interview{
-		ConversationID:     conversationID,
+		RoomID:             roomID,
 		UserID:             userID,
 		TalentID:           talentID,
 		InterviewStartTime: time.Now(),
 	}
 
-	tx := c.db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			zlog.Errorf("事务执行异常，已回滚")
-		}
-	}()
-
-	err := tx.Model(&po.Conversation{}).WithContext(ctx).Create(&conversationPo).Error
-	if err != nil {
-		tx.Rollback()
-		return errorDB(err)
-	}
-
-	err = tx.Model(&po.Interview{}).WithContext(ctx).Create(&interviewPo).Error
-	if err != nil {
-		tx.Rollback()
-		return errorDB(err)
-	}
-
-	err = tx.Commit().Error
+	err := c.db.Model(&po.Interview{}).WithContext(ctx).Create(&interviewPo).Error
 	if err != nil {
 		return errorDB(err)
 	}
+
 	return nil
 }
 
-func (c *ChatStorage) EndInterview(ctx context.Context, conversationID string) error {
-	if conversationID == "" {
-		return error_msg.CONVERSATION_ID_NOT_NULL
+func (c *ChatStorage) EndInterview(ctx context.Context, roomID, userID string) error {
+	if roomID == "" {
+		return error_msg.ROOM_ID_NOT_NULL
 	}
 
-	updates := map[string]interface{}{
-		"interview_end_time": time.Now(),
+	// 查询面试记录
+	var interview po.Interview
+	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("room_id = ? AND user_id = ?", roomID, userID).First(&interview).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return error_msg.ROOM_NOT_EXIST
+		}
+		return errorDB(err)
 	}
-	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("conversation_id = ?", conversationID).Updates(updates).Error
+
+	// 更新面试记录
+	// 开启事务 更新面试时间和面试状态
+	err = c.db.Transaction(func(tx *gorm.DB) error {
+		now := time.Now()
+		updates := map[string]interface{}{
+			"interview_end_time": &now,
+		}
+		err = tx.Model(&po.Interview{}).WithContext(ctx).Where("room_id = ? AND user_id = ?", roomID, userID).Updates(updates).Error
+		if err != nil {
+			return errorDB(err)
+		}
+
+		err = tx.Model(&po.TalentPool{}).WithContext(ctx).Where("talent_id = ?", interview.TalentID).Update("interview_status", entity.InterviewStatusInterviewed).Error
+		if err != nil {
+			return errorDB(err)
+		}
+		return nil
+	})
+
 	if err != nil {
 		return errorDB(err)
 	}
+
 	return nil
 }
 
 func (c *ChatStorage) GetInterviewsByUserID(ctx context.Context, userID string) ([]entity.Interview, error) {
-	var interviews []entity.Interview
+	var interviews []po.Interview
 	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("user_id = ?", userID).Find(&interviews).Error
 	if err != nil {
 		return nil, errorDB(err)
 	}
-	return interviews, nil
-}
 
-func (c *ChatStorage) GetChatRecordByConversationID(ctx context.Context, conversationID string) ([]entity.Message, error) {
-	if conversationID == "" {
-		return nil, error_msg.CONVERSATION_ID_NOT_NULL
+	resp := make([]entity.Interview, len(interviews))
+	for i, v := range interviews {
+
+		resp[i] = c.po2EntityInterview(v)
 	}
 
-	var messages []entity.Message
-	var conversation po.Conversation
-	err := c.db.Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).First(&conversation).Error
+	return resp, nil
+}
+
+func (c *ChatStorage) SaveInterviewMessage(ctx context.Context, message entity.InterviewMessage) error {
+	if message.MessageID == "" {
+		return error_msg.MESSAGE_ID_NOT_NULL
+	} else if message.From != ws.HR && message.From != ws.CANDIDATE {
+		return error_msg.MESSAGE_FROM_ERROR
+	} else if message.RoomID == "" {
+		return error_msg.ROOM_ID_NOT_NULL
+	} else if message.Text == "" {
+		return error_msg.MESSAGE_TEXT_NOT_NULL
+	}
+
+	var messagePo = po.InterviewMessage{
+		MessageID: message.MessageID,
+		UserID:    message.UserID,
+		From:      message.From,
+		Tag:       message.Tag,
+		Text:      message.Text,
+		RoomID:    message.RoomID,
+		Type:      message.Type,
+	}
+	err := c.db.Model(&po.InterviewMessage{}).WithContext(ctx).Create(&messagePo).Error
+	if err != nil {
+		return errorDB(err)
+	}
+	return nil
+}
+
+func (c *ChatStorage) GetInterviewMessageByRoomID(ctx context.Context, roomID string) ([]entity.InterviewMessage, error) {
+	if roomID == "" {
+		return nil, error_msg.ROOM_ID_NOT_NULL
+	}
+
+	var messages []po.InterviewMessage
+	err := c.db.Model(&po.InterviewMessage{}).WithContext(ctx).Where("room_id= ?", roomID).Order("created_at ASC").Find(&messages).Error
 	if err != nil {
 		return nil, errorDB(err)
 	}
-	err = json.Unmarshal(conversation.Messages, &messages)
-	if err != nil {
-		return nil, fmt.Errorf("反序列化消息失败: %v", err)
+
+	resp := make([]entity.InterviewMessage, len(messages))
+	for i, v := range messages {
+		resp[i] = entity.InterviewMessage{
+			MessageID: v.MessageID,
+			UserID:    v.UserID,
+			From:      v.From,
+			Tag:       v.Tag,
+			Text:      v.Text,
+			RoomID:    v.RoomID,
+			Type:      v.Type,
+		}
 	}
-	return messages, nil
+
+	return resp, nil
 }
 
-func (c *ChatStorage) SaveAllMessages(ctx context.Context, conversationID string, messages []entity.Message) error {
-	if conversationID == "" {
-		return error_msg.CONVERSATION_ID_NOT_NULL
+func (c *ChatStorage) AddTagToMessage(ctx context.Context, messageID string, tag string, roomID string) error {
+	if messageID == "" {
+		return error_msg.MESSAGE_ID_NOT_NULL
+	} else if tag == "" {
+		return error_msg.TAG_NOT_NULL
 	}
-	jsonData, err := json.Marshal(messages)
+
+	var check po.InterviewMessage
+	err := c.db.Model(&po.InterviewMessage{}).WithContext(ctx).Where("message_id = ? AND room_id = ?", messageID, roomID).First(&check).Error
 	if err != nil {
-		return fmt.Errorf("序列化消息失败: %v", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return error_msg.MESSAGE_NOT_EXIST
+		}
+		return errorDB(err)
+	}
+
+	err = c.db.Model(&po.InterviewMessage{}).WithContext(ctx).Where("message_id = ?", messageID).Update("tag", tag).Error
+	if err != nil {
+		return errorDB(err)
+	}
+	return nil
+}
+
+func (c *ChatStorage) CheckRoom(ctx context.Context, roomID, userID string) (bool, error) {
+	var interview po.Interview
+	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("room_id = ? ", roomID).First(&interview).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, errorDB(err)
+	}
+	if interview.UserID != userID && interview.TalentID != userID {
+		return false, error_msg.ROOM_NOT_EXIST
+	}
+	if interview.InterviewEndTime != nil {
+		return false, error_msg.ROOM_ALREADY_ENDED
+	}
+	return true, nil
+}
+
+func (c *ChatStorage) GetInterviewByRoomID(ctx context.Context, roomID, userID string) (*entity.Interview, error) {
+	if roomID == "" {
+		return nil, error_msg.ROOM_ID_NOT_NULL
+	}
+	var interview po.Interview
+	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("room_id = ? AND user_id = ?", roomID, userID).First(&interview).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, error_msg.ROOM_NOT_EXIST
+		}
+		return nil, errorDB(err)
+	}
+	resp := c.po2EntityInterview(interview)
+	return &resp, nil
+}
+
+func (c *ChatStorage) GetInterviewByTalentID(ctx context.Context, talentID, userID string) (*entity.Interview, error) {
+	if talentID == "" {
+		return nil, error_msg.TALENT_ID_NOT_NULL
+	}
+
+	var interview po.Interview
+	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("talent_id = ? AND user_id = ?", talentID, userID).First(&interview).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, error_msg.ROOM_NOT_EXIST
+		}
+		return nil, errorDB(err)
+	}
+
+	resp := c.po2EntityInterview(interview)
+
+	return &resp, nil
+
+}
+
+func (c *ChatStorage) SaveTalentReport(ctx context.Context, report datatypes.JSON, userID, talentID string) error {
+	if talentID == "" {
+		return error_msg.TALENT_ID_NOT_NULL
 	}
 	updates := map[string]interface{}{
-		"messages": datatypes.JSON(jsonData),
+		"talent_report": report,
 	}
-	err = c.db.Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).Updates(updates).Error
+
+	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("talent_id = ? AND user_id = ?", talentID, userID).Updates(updates).Error
 	if err != nil {
 		return errorDB(err)
 	}
 	return nil
-}
-
-func (c *ChatStorage) AddMessage(ctx context.Context, conversationID string, message entity.Message) error {
-	if conversationID == "" {
-		return error_msg.CONVERSATION_ID_NOT_NULL
-	} else if message.Role == "" || (message.Role != "user" && message.Role != "assistant" && message.Role != "system") {
-		return error_msg.MESSAGE_ROLE_ERROR
-	} else if message.Content == "" {
-		return error_msg.MESSAGE_CONTENT_NOT_NULL
-	}
-
-	err := c.db.Transaction(func(tx *gorm.DB) error {
-		var conversation po.Conversation
-
-		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).First(&conversation).Error
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return error_msg.CONVERSATION_NOT_EXIST
-			}
-			return errorDB(err)
-		}
-
-		var messages []entity.Message
-		if err := json.Unmarshal(conversation.Messages, &messages); err != nil {
-			return fmt.Errorf("反序列化消息失败: %v", err)
-		}
-
-		messages = append(messages, message)
-
-		jsonData, err := json.Marshal(messages)
-		if err != nil {
-			return fmt.Errorf("序列化消息失败: %v", err)
-		}
-
-		err = tx.Model(&po.Conversation{}).Where("conversation_id = ?", conversationID).Update("messages", datatypes.JSON(jsonData)).Error
-		if err != nil {
-			return errorDB(err)
-		}
-		return nil
-
-	})
-
-	if err != nil {
-		return errorDB(err)
-	}
-
-	return nil
-}
-
-func (c *ChatStorage) DeleteInterview(ctx context.Context, conversationID string) error {
-	if conversationID == "" {
-		return error_msg.CONVERSATION_ID_NOT_NULL
-	}
-
-	err := c.db.Transaction(func(tx *gorm.DB) error {
-		err := tx.Model(&po.Conversation{}).WithContext(ctx).Where("conversation_id = ?", conversationID).
-			Delete(&po.Conversation{}).Error
-
-		if err != nil {
-			return errorDB(err)
-		}
-
-		err = tx.Model(&po.Interview{}).WithContext(ctx).Where("conversation_id = ?", conversationID).
-			Delete(&po.Interview{}).Error
-
-		if err != nil {
-			return errorDB(err)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return errorDB(err)
-	}
-	return nil
-}
-
-func (c *ChatStorage) GetInterviewByConversationID(ctx context.Context, conversationID string) (*entity.Interview, error) {
-	if conversationID == "" {
-		return nil, error_msg.CONVERSATION_ID_NOT_NULL
-	}
-
-	var interview entity.Interview
-	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("conversation_id = ?", conversationID).First(&interview).Error
-	if err != nil {
-		return nil, errorDB(err)
-	}
-	return &interview, nil
 }

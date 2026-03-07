@@ -15,6 +15,6 @@ type JobProfile struct {
 	RedLineCondition       datatypes.JSON `gorm:"column:red_line_condition;not null"`    //岗位红线要求(自动淘汰规则)
 	AiAdjustmentSuggestion string         `gorm:"column:ai_adjustment_suggestion"`       //岗位调优建议
 
-	CreateTime time.Time `gorm:"column:create_time"`
-	UpdateTime time.Time `gorm:"column:update_time"`
+	CreatedAt time.Time `gorm:"column:created_at;"`
+	UpdatedAt time.Time `gorm:"column:updated_at;"`
 }

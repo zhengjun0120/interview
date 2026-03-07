@@ -38,6 +38,9 @@ func register() *gin.Engine {
 	jobProfileGroup := api.Group("/job_profile", middleware.JWTAuth())
 	loadJobProfileService(jobProfileGroup)
 
+	interviewGroup := api.Group("/interview", middleware.JWTAuth())
+	loadInterviewService(interviewGroup)
+
 	return r
 
 }
@@ -49,11 +52,39 @@ func loadResumeService(r *gin.RouterGroup) {
 	// /api/v1/resume/upload POST 上传简历
 	r.POST("/upload", handler.GetHandler().UploadResume)
 
+	// /api/v1/resume/get_url?talent_id=123 GET 获取简历 url
+	r.GET("/get_url", handler.GetHandler().GetResumeUrl)
+
+}
+func loadInterviewService(r *gin.RouterGroup) {
+	// /api/v1/interview/create POST 创建面试
+	r.POST("/create", handler.GetHandler().CreateInterview)
+
+	// /api/v1/interview/check_room_permission POST 检查房间权限
+	r.POST("/check_room_permission", handler.GetHandler().CheckRoomPermission)
+
+	// /api/v1/interview/ws/join?room_id=123&token=123 GET 加入面试房间
+	r.GET("/ws/join", handler.GetHandler().JoinInterviewRoom)
+
+	// /api/v1/interview/message/add_tag POST 添加消息标签
+	r.POST("/message/add_tag", handler.GetHandler().AddTagToMessage)
+
+	// /api/v1/interview/message/ai_suggestion POST 获取消息的 AI 建议
+	r.POST("/message/ai_suggestion", handler.GetHandler().GetAiSuggestion)
+
+	// /api/v1/interview/end POST 结束面试
+	r.POST("/end", handler.GetHandler().EndInterview)
 }
 
 func loadTalentService(r *gin.RouterGroup) {
 	// /api/v1/talent/get GET 获取 talent 列表
 	r.GET("/get", handler.GetHandler().GetTalent)
+
+	// /api/v1/talent/get_report?talent_id=123 GET 获取 talent 报表
+	r.GET("/get_report", handler.GetHandler().GetTalentReport)
+
+	// /api/v1/talent/mark_hire_status POST 标记 talent 录取状态
+	r.POST("/mark_hire_status", handler.GetHandler().MarkTalentHireStatus)
 }
 func loadJobProfileService(r *gin.RouterGroup) {
 	// /api/v1/job_profile/get GET 获取人才画像

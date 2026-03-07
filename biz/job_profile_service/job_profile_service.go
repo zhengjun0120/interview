@@ -32,13 +32,16 @@ func (j *JobProfileService) SaveJobProfile(ctx context.Context, req *types.SaveJ
 		Competencies:           req.Competencies,
 	}
 
-	err := j.jobProfileRepo.CheckJobTitle(ctx, req.JobTitle)
+	jobProfileID, err := j.jobProfileRepo.CheckJobTitle(ctx, req.JobTitle)
 	if err != nil {
 		//如果职位已存在，则更新职位信息
 		if errors.Is(err, error_msg.JOB_TITLE_ALREADY_EXISTS) {
+			jobProfile.JobProfileID = jobProfileID
 			err := j.jobProfileRepo.UpdateJobProfile(ctx, &jobProfile)
 			if err != nil {
 				return err
+			} else {
+				return nil
 			}
 		}
 		return err
@@ -48,6 +51,8 @@ func (j *JobProfileService) SaveJobProfile(ctx context.Context, req *types.SaveJ
 		err := j.jobProfileRepo.CreateJobProfile(ctx, &jobProfile)
 		if err != nil {
 			return err
+		} else {
+			return nil
 		}
 	}
 
