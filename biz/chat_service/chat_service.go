@@ -115,7 +115,11 @@ func (c *ChatService) AddTagToMessage(ctx context.Context, req *types.AddTagToMe
 		return error_msg.GET_USER_ID_ERROR
 	}
 
-	err := c.ChatRepo.AddTagToMessage(ctx, req.MessageID, req.Tag, userID)
+	_, err := c.ChatRepo.GetInterviewByRoomID(ctx, req.RoomID, userID)
+	if err != nil {
+		return err
+	}
+	err = c.ChatRepo.AddTagToMessage(ctx, req.MessageID, req.Tag, req.RoomID)
 	if err != nil {
 		return err
 	}

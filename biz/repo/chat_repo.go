@@ -3,6 +3,7 @@ package repo
 import (
 	"ai_interview/biz/entity"
 	"context"
+	"gorm.io/datatypes"
 )
 
 type ChatRepo interface {
@@ -25,11 +26,17 @@ type ChatRepo interface {
 	GetInterviewMessageByRoomID(ctx context.Context, roomID string) ([]entity.InterviewMessage, error)
 
 	//给某条聊天记录加上标签
-	AddTagToMessage(ctx context.Context, messageID string, tag string, userID string) error
+	AddTagToMessage(ctx context.Context, messageID string, tag string, roomID string) error
 
 	//检查面试房间是否存在
 	CheckRoom(ctx context.Context, roomID, userID string) (bool, error)
 
 	//根据roomID获取面试
 	GetInterviewByRoomID(ctx context.Context, roomID, userID string) (*entity.Interview, error)
+
+	//根据TalentID来获取面试
+	GetInterviewByTalentID(ctx context.Context, talentID, userID string) (*entity.Interview, error)
+
+	//保存生成的人才报告
+	SaveTalentReport(ctx context.Context, report datatypes.JSON, userID, talentID string) error
 }

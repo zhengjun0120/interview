@@ -20,3 +20,11 @@ type UploadResumeResponse struct {
 	HireStatus      string    `json:"hire_status"`
 	CreatedAt       time.Time `json:"created_at"`
 }
+
+type GetResumeUrlRequest struct {
+	TalentID string
+}
+
+type GetResumeUrlResponse struct {
+	ResumeUrl string `json:"resume_url"`
+}

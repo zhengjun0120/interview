@@ -16,12 +16,13 @@ type Conversation struct {
 
 // Interview 面试表
 type Interview struct {
-	ID                 int        `gorm:"column:id;primary_key;autoIncrement"`  //主键
-	RoomID             string     `gorm:"column:room_id;not null;unique"`       //房间ID
-	UserID             string     `gorm:"column:user_id;not null"`              //用户ID
-	TalentID           string     `gorm:"column:talent_id;not null"`            //人才ID
-	InterviewStartTime time.Time  `gorm:"column:interview_start_time;not null"` //面试开始时间
-	InterviewEndTime   *time.Time `gorm:"column:interview_end_time"`            //面试结束时间
+	ID                 int            `gorm:"column:id;primary_key;autoIncrement"`  //主键
+	RoomID             string         `gorm:"column:room_id;not null;unique"`       //房间ID
+	UserID             string         `gorm:"column:user_id;not null"`              //用户ID
+	TalentID           string         `gorm:"column:talent_id;not null"`            //人才ID
+	TalentReport       datatypes.JSON `gorm:"column:talent_report"`                 // 人才报告
+	InterviewStartTime time.Time      `gorm:"column:interview_start_time;not null"` //面试开始时间
+	InterviewEndTime   *time.Time     `gorm:"column:interview_end_time"`            //面试结束时间
 
 	CreatedAt time.Time `gorm:"column:created_at"`
 	UpdatedAt time.Time `gorm:"column:updated_at"`

@@ -65,3 +65,15 @@ func CastServiceResp2GetTalentInterviewResp(resp []types.GetTalentInterviewRespo
 	return &res
 
 }
+
+func CastGetResumeUrlReq2ServiceParams(req *def.GetResumeUrlRequest) *types.GetResumeUrlRequest {
+	return &types.GetResumeUrlRequest{
+		TalentID: req.TalentID,
+	}
+}
+
+func CastGetResumeUrlResp2ServiceResp(resp *types.GetResumeUrlResponse) *def.GetResumeUrlResponse {
+	return &def.GetResumeUrlResponse{
+		ResumeUrl: resp.ResumeUrl,
+	}
+}

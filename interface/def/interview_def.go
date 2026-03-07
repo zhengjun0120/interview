@@ -30,6 +30,7 @@ type JoinInterviewRoomRequest struct {
 // 添加标签请求
 type AddTagToMessageRequest struct {
 	MessageID string `json:"message_id"`
+	RoomID    string `json:"room_id"`
 	Tag       string `json:"tag"`
 }
 

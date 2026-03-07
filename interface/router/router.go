@@ -52,6 +52,9 @@ func loadResumeService(r *gin.RouterGroup) {
 	// /api/v1/resume/upload POST 上传简历
 	r.POST("/upload", handler.GetHandler().UploadResume)
 
+	// /api/v1/resume/get_url?talent_id=123 GET 获取简历 url
+	r.GET("/get_url", handler.GetHandler().GetResumeUrl)
+
 }
 func loadInterviewService(r *gin.RouterGroup) {
 	// /api/v1/interview/create POST 创建面试

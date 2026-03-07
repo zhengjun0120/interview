@@ -11,6 +11,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"gorm.io/datatypes"
 	"math"
 	"strconv"
 	"strings"
@@ -255,4 +256,72 @@ func (h *ResumeService) GetTalentInterview(ctx context.Context) ([]types.GetTale
 
 	return resp, nil
 
+}
+
+func (h *ResumeService) GetResumeUrl(ctx context.Context, req *types.GetResumeUrlRequest) (*types.GetResumeUrlResponse, error) {
+	userID, ok := entity.GetUserID(ctx)
+	if !ok {
+		return nil, error_msg.GET_USER_ID_ERROR
+	}
+
+	resume, err := h.resumeRepo.GetResumeByTalentID(ctx, req.TalentID)
+	if err != nil {
+		return nil, err
+	}
+	if resume.UserID != userID {
+		return nil, error_msg.RESUME_NOT_EXIST
+	}
+
+	return &types.GetResumeUrlResponse{
+		ResumeUrl: resume.ResumeUrl,
+	}, nil
+}
+
+// 获取面试报告
+func (h *ResumeService) GetTalentReport(ctx context.Context, req *types.GetTalentReportRequest) (*types.GetTalentReportResponse, error) {
+	userID, ok := entity.GetUserID(ctx)
+	if !ok {
+		return nil, error_msg.GET_USER_ID_ERROR
+	}
+
+	interview, err := h.chatRepo.GetInterviewByTalentID(ctx, req.TalentID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if interview.TalentReport != nil {
+		var getTalentReportQuestionJson []types.GetTalentReportQuestionArrJson
+		err := json.Unmarshal(interview.TalentReport, &getTalentReportQuestionJson)
+		if err != nil {
+			return nil, fmt.Errorf("解析ai消息失败: %v\n 原始消息: %s", err, interview.TalentReport)
+		}
+		return &types.GetTalentReportResponse{
+			List: getTalentReportQuestionJson,
+		}, nil
+	}
+
+	message, err := h.chatRepo.GetInterviewMessageByRoomID(ctx, interview.RoomID)
+	if err != nil {
+		return nil, err
+	}
+
+	aiResp, err := h.chatService.InterviewMessageAnalyseChat(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+
+	var getTalentReportQuestionJson []types.GetTalentReportQuestionArrJson
+	err = json.Unmarshal([]byte(aiResp), &getTalentReportQuestionJson)
+	if err != nil {
+		return nil, fmt.Errorf("解析ai消息失败: %v\n 原始消息: %s", err, aiResp)
+	}
+
+	err = h.chatRepo.SaveTalentReport(ctx, datatypes.JSON(aiResp), userID, req.TalentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.GetTalentReportResponse{
+		List: getTalentReportQuestionJson,
+	}, nil
 }

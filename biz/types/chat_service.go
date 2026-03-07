@@ -48,6 +48,7 @@ type CheckRoomPermissionResponse struct {
 
 type AddTagToMessageRequest struct {
 	MessageID string
+	RoomID    string
 	Tag       string
 }
 type GetAiSuggestionRequest struct {

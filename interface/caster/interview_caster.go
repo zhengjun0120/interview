@@ -40,6 +40,7 @@ func CastJoinInterviewRoomReq2ServiceParams(req *def.JoinInterviewRoomRequest) *
 func CastAddTagToMessageReq2ServiceParams(req *def.AddTagToMessageRequest) *types.AddTagToMessageRequest {
 	return &types.AddTagToMessageRequest{
 		MessageID: req.MessageID,
+		RoomID:    req.RoomID,
 		Tag:       req.Tag,
 	}
 }

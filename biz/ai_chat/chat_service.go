@@ -14,4 +14,6 @@ type IChatService interface {
 	DocxToResumeStrChat(ctx context.Context, dockUrl string) (string, error)
 	// 面试AI建议聊天
 	InterviewAiSuggestionChat(ctx context.Context, interviewMessage []entity.InterviewMessage, resumeStr, resumeUrl string) (string, error)
+	// 生成人才报告
+	InterviewMessageAnalyseChat(ctx context.Context, interviewMessage []entity.InterviewMessage) (string, error)
 }

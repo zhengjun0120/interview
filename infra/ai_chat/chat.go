@@ -234,6 +234,21 @@ func (c *ChatClient) InterviewAiSuggestionChat(ctx context.Context, interviewMes
 	return resp, nil
 }
 
+// 生成面试报告
+func (c *ChatClient) InterviewMessageAnalyseChat(ctx context.Context, interviewMessage []entity.InterviewMessage) (string, error) {
+
+	inputMessageStr, err := buildInterviewMessage(interviewMessage, "")
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := c.buildInputChat(ctx, conf.GetConfig().AiChat.InterviewMessageAnalysePrompt, inputMessageStr, "")
+	if err != nil {
+		return "", err
+	}
+	return resp, nil
+}
+
 // 统一构建输入消息 并获取输出 适应多模态
 func (c *ChatClient) buildInputChat(ctx context.Context, systemMessageStr string, userMessageStr string, fileUrl string) (string, error) {
 	// 构建上下文，使用&responses.ItemInputMessage

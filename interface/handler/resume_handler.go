@@ -82,3 +82,27 @@ func (h *Handler) GetTalent(gCtx *gin.Context) {
 	}
 
 }
+
+func (h *Handler) GetResumeUrl(gCtx *gin.Context) {
+	ctx := gCtx.Request.Context()
+	r := response.NewResponse(gCtx)
+	var req def.GetResumeUrlRequest
+	req.TalentID = gCtx.Query("talent_id")
+	if req.TalentID == "" {
+		r.Error(response.PARAM_ERROR)
+		return
+	}
+
+	serviceResp, err := h.ResumeServer.GetResumeUrl(ctx, caster.CastGetResumeUrlReq2ServiceParams(&req))
+	if err != nil {
+		msgCode := ErrorToMsgCode(err)
+		if msgCode == response.COMMON_FAIL {
+			msgCode.Msg = err.Error()
+		}
+		r.Error(msgCode)
+		zlog.Errorf("GetResumeUrl接口调用失败，%v", err)
+	} else {
+		resp := caster.CastGetResumeUrlResp2ServiceResp(serviceResp)
+		r.Success(resp)
+	}
+}
