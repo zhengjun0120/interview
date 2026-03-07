@@ -153,3 +153,17 @@ func (c *ChatService) GetAiSuggestion(ctx context.Context, req *types.GetAiSugge
 	}
 	return &types.GetAiSuggestionResponse{Text: aiSuggestion}, nil
 }
+
+func (c *ChatService) EndInterview(ctx context.Context, req *types.EndInterviewRequest) error {
+	userID, ok := entity.GetUserID(ctx)
+	if !ok {
+		return error_msg.GET_USER_ID_ERROR
+	}
+	//结束面试
+	err := c.ChatRepo.EndInterview(ctx, req.RoomID, userID)
+	if err != nil {
+		return err
+	}
+	
+	return nil
+}

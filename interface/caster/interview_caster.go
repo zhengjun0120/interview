@@ -55,3 +55,9 @@ func CastServiceResp2GetAiSuggestionResp(resp *types.GetAiSuggestionResponse) *d
 		Text: resp.Text,
 	}
 }
+
+func CastEndInterviewReq2ServiceParams(req *def.EndInterviewRequest) *types.EndInterviewRequest {
+	return &types.EndInterviewRequest{
+		RoomID: req.RoomID,
+	}
+}

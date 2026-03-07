@@ -71,11 +71,20 @@ func loadInterviewService(r *gin.RouterGroup) {
 
 	// /api/v1/interview/message/ai_suggestion POST 获取消息的 AI 建议
 	r.POST("/message/ai_suggestion", handler.GetHandler().GetAiSuggestion)
+
+	// /api/v1/interview/end POST 结束面试
+	r.POST("/end", handler.GetHandler().EndInterview)
 }
 
 func loadTalentService(r *gin.RouterGroup) {
 	// /api/v1/talent/get GET 获取 talent 列表
 	r.GET("/get", handler.GetHandler().GetTalent)
+
+	// /api/v1/talent/get_report?talent_id=123 GET 获取 talent 报表
+	r.GET("/get_report", handler.GetHandler().GetTalentReport)
+
+	// /api/v1/talent/mark_hire_status POST 标记 talent 录取状态
+	r.POST("/mark_hire_status", handler.GetHandler().MarkTalentHireStatus)
 }
 func loadJobProfileService(r *gin.RouterGroup) {
 	// /api/v1/job_profile/get GET 获取人才画像

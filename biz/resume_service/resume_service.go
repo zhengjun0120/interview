@@ -146,9 +146,9 @@ func (h *ResumeService) UploadResume(ctx context.Context, req *types.UploadResum
 		FullName:        talentJson.FullName,
 		TargetPosition:  talentJson.TargetPosition,
 		MatchScore:      talentJson.MatchScore,
-		InterviewStatus: "未面试",
+		InterviewStatus: entity.InterviewStatusUninterviewed, //未面试
 		CoreAdvantages:  talentJson.CoreAdvantages,
-		HireStatus:      "未录用",
+		HireStatus:      entity.HireStatusNotHired, //未录用
 		CreatedAt:       time.Now(),
 	}
 
@@ -324,4 +324,16 @@ func (h *ResumeService) GetTalentReport(ctx context.Context, req *types.GetTalen
 	return &types.GetTalentReportResponse{
 		List: getTalentReportQuestionJson,
 	}, nil
+}
+
+func (h *ResumeService) MarkTalentHireStatus(ctx context.Context, req *types.MarkTalentHireStatusRequest) error {
+	userID, ok := entity.GetUserID(ctx)
+	if !ok {
+		return error_msg.GET_USER_ID_ERROR
+	}
+	err := h.resumeRepo.MarkTalentHireStatus(ctx, req.TalentID, userID, req.HireStatus)
+	if err != nil {
+		return err
+	}
+	return nil
 }

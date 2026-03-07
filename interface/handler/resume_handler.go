@@ -106,3 +106,50 @@ func (h *Handler) GetResumeUrl(gCtx *gin.Context) {
 		r.Success(resp)
 	}
 }
+
+func (h *Handler) GetTalentReport(gCtx *gin.Context) {
+	ctx := gCtx.Request.Context()
+	r := response.NewResponse(gCtx)
+	var req def.GetTalentReportRequest
+	req.TalentID = gCtx.Query("talent_id")
+
+	if req.TalentID == "" {
+		r.Error(response.PARAM_ERROR)
+		return
+	}
+
+	serviceResp, err := h.ResumeServer.GetTalentReport(ctx, caster.CastGetTalentReportReq2ServiceParams(&req))
+	if err != nil {
+		msgCode := ErrorToMsgCode(err)
+		if msgCode == response.COMMON_FAIL {
+			msgCode.Msg = err.Error()
+		}
+		r.Error(msgCode)
+		zlog.Errorf("GetTalentReport接口调用失败，%v", err)
+	} else {
+		resp := caster.CastServiceResp2GetTalentReportResp(serviceResp)
+		r.Success(resp)
+	}
+
+}
+
+func (h *Handler) MarkTalentHireStatus(gCtx *gin.Context) {
+	ctx := gCtx.Request.Context()
+	r := response.NewResponse(gCtx)
+	var req def.MarkTalentHireStatusRequest
+	if err := gCtx.ShouldBindJSON(&req); err != nil {
+		r.Error(response.PARAM_ERROR)
+		return
+	}
+	err := h.ResumeServer.MarkTalentHireStatus(ctx, caster.CastMarkTalentHireStatusReq2ServiceParams(&req))
+	if err != nil {
+		msgCode := ErrorToMsgCode(err)
+		if msgCode == response.COMMON_FAIL {
+			msgCode.Msg = err.Error()
+		}
+		r.Error(msgCode)
+		zlog.Errorf("MarkTalentHireStatus接口调用失败，%v", err)
+	} else {
+		r.Success(nil)
+	}
+}

@@ -14,7 +14,7 @@ type ChatRepo interface {
 	CreateInterview(ctx context.Context, userID, talentID, roomID string) error
 
 	//结束面试
-	EndInterview(ctx context.Context, conversationID string) error
+	EndInterview(ctx context.Context, roomID, userID string) error
 
 	//获取hr的所有面试
 	GetInterviewsByUserID(ctx context.Context, userID string) ([]entity.Interview, error)

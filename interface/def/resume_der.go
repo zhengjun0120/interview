@@ -1,6 +1,7 @@
 package def
 
 import (
+	"ai_interview/biz/types"
 	"mime/multipart"
 	"time"
 )
@@ -27,4 +28,18 @@ type GetResumeUrlRequest struct {
 
 type GetResumeUrlResponse struct {
 	ResumeUrl string `json:"resume_url"`
+}
+
+type GetTalentReportRequest struct {
+	TalentID string
+}
+
+type GetTalentReportResponse struct {
+	List []types.GetTalentReportQuestionArrJson `json:"list"`
+}
+
+// 标记人才录取状态
+type MarkTalentHireStatusRequest struct {
+	TalentID   string `json:"talent_id"`
+	HireStatus string `json:"hire_status"`
 }

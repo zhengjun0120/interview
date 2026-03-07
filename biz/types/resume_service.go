@@ -21,7 +21,10 @@ type IResumeService interface {
 	GetResumeUrl(ctx context.Context, req *GetResumeUrlRequest) (*GetResumeUrlResponse, error)
 
 	// 获取人才报告
-	GetTalentReport(ctx context.Context, req *GetTalentReportRequest)
+	GetTalentReport(ctx context.Context, req *GetTalentReportRequest) (*GetTalentReportResponse, error)
+
+	// 标记人才 录用或淘汰
+	MarkTalentHireStatus(ctx context.Context, req *MarkTalentHireStatusRequest) error
 }
 
 type UploadResumeParams struct {
@@ -80,4 +83,9 @@ type GetTalentReportQuestionArrJson struct {
 }
 type GetTalentReportResponse struct {
 	List []GetTalentReportQuestionArrJson
+}
+
+type MarkTalentHireStatusRequest struct {
+	TalentID   string
+	HireStatus string
 }

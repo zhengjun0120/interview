@@ -68,19 +68,44 @@ func (c *ChatStorage) CreateInterview(ctx context.Context, userID, talentID, roo
 	return nil
 }
 
-func (c *ChatStorage) EndInterview(ctx context.Context, roomID string) error {
+func (c *ChatStorage) EndInterview(ctx context.Context, roomID, userID string) error {
 	if roomID == "" {
 		return error_msg.ROOM_ID_NOT_NULL
 	}
 
-	now := time.Now()
-	updates := map[string]interface{}{
-		"interview_end_time": &now,
+	// 查询面试记录
+	var interview po.Interview
+	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("room_id = ? AND user_id = ?", roomID, userID).First(&interview).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return error_msg.ROOM_NOT_EXIST
+		}
+		return errorDB(err)
 	}
-	err := c.db.Model(&po.Interview{}).WithContext(ctx).Where("room_id = ?", roomID).Updates(updates).Error
+
+	// 更新面试记录
+	// 开启事务 更新面试时间和面试状态
+	err = c.db.Transaction(func(tx *gorm.DB) error {
+		now := time.Now()
+		updates := map[string]interface{}{
+			"interview_end_time": &now,
+		}
+		err = tx.Model(&po.Interview{}).WithContext(ctx).Where("room_id = ? AND user_id = ?", roomID, userID).Updates(updates).Error
+		if err != nil {
+			return errorDB(err)
+		}
+
+		err = tx.Model(&po.TalentPool{}).WithContext(ctx).Where("talent_id = ?", interview.TalentID).Update("interview_status", entity.InterviewStatusInterviewed).Error
+		if err != nil {
+			return errorDB(err)
+		}
+		return nil
+	})
+
 	if err != nil {
 		return errorDB(err)
 	}
+
 	return nil
 }
 

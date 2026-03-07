@@ -132,3 +132,27 @@ func (h *Handler) GetAiSuggestion(gCtx *gin.Context) {
 		r.Success(caster.CastServiceResp2GetAiSuggestionResp(serviceResp))
 	}
 }
+
+// 结束面试
+func (h *Handler) EndInterview(gCtx *gin.Context) {
+	ctx := gCtx.Request.Context()
+	r := response.NewResponse(gCtx)
+	var req def.EndInterviewRequest
+	if err := gCtx.ShouldBindJSON(&req); err != nil {
+		r.Error(response.PARAM_ERROR)
+		return
+	}
+
+	err := h.ChatServer.EndInterview(ctx, caster.CastEndInterviewReq2ServiceParams(&req))
+	if err != nil {
+		msgCode := ErrorToMsgCode(err)
+		if msgCode == response.COMMON_FAIL {
+			msgCode.Msg = err.Error()
+		}
+		r.Error(msgCode)
+		zlog.Errorf("EndInterview接口调用失败，%v", err)
+		return
+	} else {
+		r.Success(nil)
+	}
+}

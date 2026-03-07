@@ -47,4 +47,7 @@ type ResumeRepo interface {
 
 	//通过TalentID来获取该人才的简历
 	GetResumeByTalentID(ctx context.Context, talentID string) (*entity.Resume, error)
+
+	//标记人才
+	MarkTalentHireStatus(ctx context.Context, talentID, userID, status string) error
 }

@@ -48,6 +48,7 @@ var (
 	TALENT_MATCH_SCORE_INVALID      = errors.New("匹配分数无效")
 
 	TALENT_ID_NOT_EXIST = errors.New("人才ID不存在")
+	HIRE_STATUS_ERROR   = errors.New("录用状态错误")
 
 	ROOM_ID_NOT_NULL         = errors.New("房间ID不能为空")
 	MESSAGE_ROLE_ERROR       = errors.New("消息角色错误")

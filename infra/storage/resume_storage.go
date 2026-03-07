@@ -378,3 +378,19 @@ func (r *ResumeStorage) GetResumeByTalentID(ctx context.Context, talentID string
 		CreatedAt:  resumePo.CreatedAt,
 	}, nil
 }
+
+// 标记人才，录用或淘汰
+func (r *ResumeStorage) MarkTalentHireStatus(ctx context.Context, talentID, userID, status string) error {
+	if talentID == "" {
+		return error_msg.TALENT_ID_NOT_NULL
+	} else if status != entity.HireStatusHired && status != entity.HireStatusNotHired {
+		return error_msg.HIRE_STATUS_ERROR
+	}
+
+	err := r.db.Model(&po.TalentPool{}).WithContext(ctx).Where("talent_id = ? AND user_id = ?", talentID, userID).Update("hire_status", status).Error
+	if err != nil {
+		return errorDB(err)
+	}
+	return nil
+
+}

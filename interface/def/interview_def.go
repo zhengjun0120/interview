@@ -34,10 +34,16 @@ type AddTagToMessageRequest struct {
 	Tag       string `json:"tag"`
 }
 
+// 获取AI建议请求
 type GetAiSuggestionRequest struct {
 	RoomID string `json:"room_id"`
 }
 
 type GetAiSuggestionResponse struct {
 	Text string `json:"text"`
+}
+
+// 结束面试请求
+type EndInterviewRequest struct {
+	RoomID string `json:"room_id"`
 }

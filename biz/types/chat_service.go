@@ -20,6 +20,9 @@ type IChatService interface {
 
 	// 获取面试时的实时追问
 	GetAiSuggestion(ctx context.Context, req *GetAiSuggestionRequest) (*GetAiSuggestionResponse, error)
+
+	//结束面试
+	EndInterview(ctx context.Context, req *EndInterviewRequest) error
 }
 
 // 需要被面试者的ID
@@ -56,4 +59,8 @@ type GetAiSuggestionRequest struct {
 }
 type GetAiSuggestionResponse struct {
 	Text string
+}
+
+type EndInterviewRequest struct {
+	RoomID string
 }
