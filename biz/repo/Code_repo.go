@@ -1,10 +1,14 @@
 package repo
 
-import "ai_interview/biz/types"
+import (
+	"ai_interview/biz/types"
+	"context"
+)
 
-type ICodeService interface {
-	// 验证码发送
-	CaptchaSend(way types.CaptchaWayType, key string) error
-	// 验证码校验
-	CaptchaCheck(way types.CaptchaWayType, key, code string) error
+type CodeRepo interface {
+	//储存验证码
+	CaptchaStash(ctx context.Context, captcha *types.Captcha) error
+
+	//检验验证码
+	CaptchaCheck(ctx context.Context, way types.CaptchaWayType, email string, code string) error
 }

@@ -3,8 +3,9 @@ package util
 import (
 	"ai_interview/conf"
 	"fmt"
-	"github.com/golang-jwt/jwt/v5"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type Claims struct {

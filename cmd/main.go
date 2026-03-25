@@ -1,8 +1,7 @@
 package main
 
 import (
-	"ai_interview/biz/chat_service"
-	"ai_interview/biz/chat_service/ws"
+	"ai_interview/biz/code_service"
 	"ai_interview/biz/job_profile_service"
 	"ai_interview/biz/resume_service"
 	"ai_interview/biz/user_service"
@@ -44,14 +43,16 @@ func main() {
 	storage.InitResumeStorage()
 	storage.InitChatStorage()
 	storage.InitJobProfileStorage()
+	storage.InitCodeStorage()
 
 	//初始化WebSocket
 	ws.InitWebSocketHub(storage.GetChatStorage())
 	go ws.GetWebSocketHub().Run()
 
 	// 初始化服务
-	us := user_service.NewUserService(storage.GetUserStorage())
-	rs := resume_service.NewResumeService(storage.GetResumeStorage(), storage.GetChatStorage(), storage.GetJobProfileStorage(), ai_chat.GetAiClient(), cos.GetCosClient())
+	us := user_service.NewUserService(storage.GetUserStorage(), storage.GetCodeStorage())
+	cs := code_service.NewCodeService(storage.GetCodeStorage())
+	rs := resume_service.NewResumeService(storage.GetResumeStorage(), storage.GetChatStorage(), storage.GetJobProfileStorage(), ai_chat.GetAiClient())
 	js := job_profile_service.NewJobProfileService(storage.GetJobProfileStorage())
 	cs := chat_service.NewChatService(storage.GetChatStorage(), storage.GetResumeStorage(), ai_chat.GetAiClient())
 

@@ -18,11 +18,11 @@ func GetHandler() *Handler {
 	return handler
 }
 
-func InitHandler(userServer types.IUserService, resumeServer types.IResumeService, jobProfileServer types.IJobProfileService, chatServer types.IChatService) {
+func InitHandler(userServer types.IUserService, resumeServer types.IResumeService, jobProfileServer types.IJobProfileService, codeServer types.ICodeService) {
 	handler = &Handler{
 		UserServer:       userServer,
 		ResumeServer:     resumeServer,
 		JobProfileServer: jobProfileServer,
-		ChatServer:       chatServer,
+		CodeServer:       codeServer,
 	}
 }
