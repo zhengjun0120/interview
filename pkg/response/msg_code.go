@@ -30,6 +30,10 @@ func (r *JsonMsgResponse) Success(data interface{}) {
 		Message: SUCCESS_MSG,
 		Data:    data,
 	}
+	if data == nil {
+		res.Data = nilStruct{}
+	}
+
 	r.Ctx.JSON(200, res)
 }
 

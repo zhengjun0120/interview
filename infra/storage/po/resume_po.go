@@ -9,6 +9,7 @@ type Resume struct {
 	ResumeID   string `gorm:"column:resume_id;not null;unique"` //简历ID
 	ResumeName string `gorm:"column:resume_name;not null"`      //简历名称
 	ResumeUrl  string `gorm:"column:resume_url;not null"`       //简历URL
+	ResumeStr  string `gorm:"column:resume_str"`                //简历字符串
 
 	CreatedAt time.Time `gorm:"column:created_at;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;"`

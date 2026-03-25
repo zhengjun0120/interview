@@ -35,7 +35,7 @@ func GenerateJWT(userID string) (string, error) {
 // 解析token
 func ParseToken(tokenString string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return conf.GetConfig().Jwt.SecretKey, nil
+		return []byte(conf.GetConfig().Jwt.SecretKey), nil
 	})
 
 	if err != nil {

@@ -41,4 +41,13 @@ type ResumeRepo interface {
 
 	//Hr端 一键删除简历+人才
 	DeleteResumeAndTalent(ctx context.Context, resumeID, talentID, userID string) error
+
+	//检查TalentID是否存在
+	CheckTalentID(ctx context.Context, talentID string) (bool, error)
+
+	//通过TalentID来获取该人才的简历
+	GetResumeByTalentID(ctx context.Context, talentID string) (*entity.Resume, error)
+
+	//标记人才
+	MarkTalentHireStatus(ctx context.Context, talentID, userID, status string) error
 }

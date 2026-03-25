@@ -45,11 +45,16 @@ func main() {
 	storage.InitJobProfileStorage()
 	storage.InitCodeStorage()
 
+	//初始化WebSocket
+	ws.InitWebSocketHub(storage.GetChatStorage())
+	go ws.GetWebSocketHub().Run()
+
 	// 初始化服务
 	us := user_service.NewUserService(storage.GetUserStorage(), storage.GetCodeStorage())
 	cs := code_service.NewCodeService(storage.GetCodeStorage())
 	rs := resume_service.NewResumeService(storage.GetResumeStorage(), storage.GetChatStorage(), storage.GetJobProfileStorage(), ai_chat.GetAiClient())
 	js := job_profile_service.NewJobProfileService(storage.GetJobProfileStorage())
+	cs := chat_service.NewChatService(storage.GetChatStorage(), storage.GetResumeStorage(), ai_chat.GetAiClient())
 
 	// 初始化handler
 	handler.InitHandler(us, rs, js, cs)

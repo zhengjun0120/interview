@@ -9,6 +9,7 @@ type Handler struct {
 	ResumeServer     types.IResumeService
 	CodeServer       types.ICodeService
 	JobProfileServer types.IJobProfileService
+	ChatServer       types.IChatService
 }
 
 var handler *Handler

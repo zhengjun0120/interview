@@ -65,3 +65,34 @@ func CastServiceResp2GetTalentInterviewResp(resp []types.GetTalentInterviewRespo
 	return &res
 
 }
+
+func CastGetResumeUrlReq2ServiceParams(req *def.GetResumeUrlRequest) *types.GetResumeUrlRequest {
+	return &types.GetResumeUrlRequest{
+		TalentID: req.TalentID,
+	}
+}
+
+func CastGetResumeUrlResp2ServiceResp(resp *types.GetResumeUrlResponse) *def.GetResumeUrlResponse {
+	return &def.GetResumeUrlResponse{
+		ResumeUrl: resp.ResumeUrl,
+	}
+}
+
+func CastGetTalentReportReq2ServiceParams(req *def.GetTalentReportRequest) *types.GetTalentReportRequest {
+	return &types.GetTalentReportRequest{
+		TalentID: req.TalentID,
+	}
+}
+
+func CastServiceResp2GetTalentReportResp(resp *types.GetTalentReportResponse) *def.GetTalentReportResponse {
+	return &def.GetTalentReportResponse{
+		List: resp.List,
+	}
+}
+
+func CastMarkTalentHireStatusReq2ServiceParams(req *def.MarkTalentHireStatusRequest) *types.MarkTalentHireStatusRequest {
+	return &types.MarkTalentHireStatusRequest{
+		HireStatus: req.HireStatus,
+		TalentID:   req.TalentID,
+	}
+}

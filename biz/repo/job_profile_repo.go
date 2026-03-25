@@ -22,5 +22,5 @@ type JobProfileRepo interface {
 	GetJobProfileByJobProfileID(ctx context.Context, jobProfileID string) (*entity.JobProfile, error)
 
 	//检查职位名称是否已存在
-	CheckJobTitle(ctx context.Context, jobTitle string) error
+	CheckJobTitle(ctx context.Context, jobTitle string) (string, error)
 }
