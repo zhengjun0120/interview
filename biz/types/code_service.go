@@ -1,11 +1,9 @@
 package types
 
-import (
-	"fmt"
-	"math/rand"
-)
+import "context"
 
 type ICodeService interface {
+	CaptchaSend(ctx context.Context, way CaptchaWayType, key string) error
 }
 
 type Captcha struct {
@@ -23,15 +21,3 @@ const (
 	CaptchaWayTypeRegister CaptchaWayType = "register" // 注册
 	CaptchaWayTypeReset    CaptchaWayType = "reset"    // 重置
 )
-
-type CaptchaMethodType string
-
-const (
-	CaptchaMethodTypeEmail CaptchaMethodType = "email"
-	CaptchaMethodTypePhone CaptchaMethodType = "phone"
-)
-
-func (cs *Captcha) GenrateCaptchaCode() {
-	num := rand.Intn(1000000)
-	cs.CaptchaCode = fmt.Sprintf("%06d", num)
-}

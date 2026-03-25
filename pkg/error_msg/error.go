@@ -28,8 +28,6 @@ var ErrorCaptchaSend = errors.New("验证码发送失败")
 
 var ErrorCaptchaCheck = errors.New("验证码错误")
 
-var ErrorSecurityAssertion = errors.New("安全断言失败")
-
 var ErrorCaptchaExpire = errors.New("验证码过期或未向该手机号发送过验证码")
 
 var ErrorCode2Redis = errors.New("验证码存入redis失败")

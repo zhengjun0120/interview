@@ -5,6 +5,7 @@ import (
 	"ai_interview/interface/handler"
 	"ai_interview/interface/middleware"
 	"fmt"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,6 +16,8 @@ func RunServer() {
 	port := conf.GetConfig().Server.Port
 	host := conf.GetConfig().Server.Host
 	r.Run(host + ":" + port)
+	//r.Run("8080")
+
 	fmt.Println("服务启动成功")
 }
 
@@ -44,7 +47,12 @@ func register() *gin.Engine {
 
 func loadUserService(r *gin.RouterGroup) {
 	r.POST("/login", handler.GetHandler().Login)
+
+	r.POST("/register", handler.GetHandler().Register)
+
+	r.POST("/sendcode", handler.GetHandler().SendCode)
 }
+
 func loadResumeService(r *gin.RouterGroup) {
 	// /api/v1/resume/upload POST 上传简历
 	r.POST("/upload", handler.GetHandler().UploadResume)

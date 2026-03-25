@@ -3,8 +3,9 @@ package util
 import (
 	"ai_interview/conf"
 	"fmt"
-	"github.com/golang-jwt/jwt/v5"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type Claims struct {
@@ -24,7 +25,7 @@ func GenerateJWT(userID string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(conf.GetConfig().Jwt.SecretKey)
+	tokenString, err := token.SignedString([]byte(conf.GetConfig().Jwt.SecretKey))
 	if err != nil {
 		return "", fmt.Errorf("生成token失败，%v", err)
 	}

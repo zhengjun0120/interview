@@ -2,6 +2,7 @@ package database
 
 import (
 	"ai_interview/conf"
+	"ai_interview/pkg/zlog"
 	"context"
 	"fmt"
 
@@ -17,7 +18,7 @@ func InitRedis() {
 	dbn := conf.GetConfig().Redis.DB
 
 	_client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", host, port),
+		Addr:     fmt.Sprintf("%s:%s", host, port),
 		Password: password,
 		DB:       dbn,
 	})
@@ -26,7 +27,7 @@ func InitRedis() {
 		panic("redis连接失败" + err.Error())
 	}
 	client = _client
-	fmt.Println("redis连接成功")
+	zlog.Infof("redis连接成功")
 }
 
 func GetRedis() *redis.Client {
