@@ -29,7 +29,7 @@ type Mysql struct {
 
 type Redis struct {
 	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
+	Port     string `yaml:"port"`
 	DB       int    `yaml:"db"`
 	Password string `yaml:"password"`
 }
@@ -45,7 +45,7 @@ type Jwt struct {
 
 type Smtp struct {
 	SmtpHost    string `yaml:"smtp_host"`
-	SmtpPort    string `yaml:"smtp_port"`
+	SmtpPort    int    `yaml:"smtp_port"`
 	SmtpUser    string `yaml:"smtp_user"`
 	SmtpPass    string `yaml:"smtp_pass"`
 	EncodedName string `yaml:"encoded_name"`
