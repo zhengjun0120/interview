@@ -23,4 +23,7 @@ type UserRepo interface {
 
 	//检查邮箱是否注册
 	CheckEmail(ctx context.Context, email string, userType string) (bool, error)
+
+	//检查用户是否存在
+	CheckUser(ctx context.Context, userID string) (bool, error)
 }

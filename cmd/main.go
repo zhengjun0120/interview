@@ -1,6 +1,8 @@
 package main
 
 import (
+	"ai_interview/biz/chat_service"
+	"ai_interview/biz/chat_service/ws"
 	"ai_interview/biz/code_service"
 	"ai_interview/biz/job_profile_service"
 	"ai_interview/biz/resume_service"
@@ -51,13 +53,13 @@ func main() {
 
 	// 初始化服务
 	us := user_service.NewUserService(storage.GetUserStorage(), storage.GetCodeStorage())
-	cs := code_service.NewCodeService(storage.GetCodeStorage())
-	rs := resume_service.NewResumeService(storage.GetResumeStorage(), storage.GetChatStorage(), storage.GetJobProfileStorage(), ai_chat.GetAiClient())
+	codes := code_service.NewCodeService(storage.GetCodeStorage())
+	rs := resume_service.NewResumeService(storage.GetResumeStorage(), storage.GetChatStorage(), storage.GetJobProfileStorage(), ai_chat.GetAiClient(), cos.GetCosClient())
 	js := job_profile_service.NewJobProfileService(storage.GetJobProfileStorage())
 	cs := chat_service.NewChatService(storage.GetChatStorage(), storage.GetResumeStorage(), ai_chat.GetAiClient())
 
 	// 初始化handler
-	handler.InitHandler(us, rs, js, cs)
+	handler.InitHandler(us, rs, js, codes, cs)
 
 	// 启动服务
 	router.RunServer()
